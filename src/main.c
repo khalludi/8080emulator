@@ -10,7 +10,7 @@ int main() {
     State8080 state;
 
     // Load argument into memory
-    FILE *fileptr = fopen("../res/invaders","rb");
+    FILE *fileptr = fopen("./res/invaders","rb");
     fseek(fileptr, 0, SEEK_END);
     long filelen = ftell(fileptr);
     rewind(fileptr);

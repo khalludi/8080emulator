@@ -1,4 +1,4 @@
-CFLAGS=-Wall -I./src/include
+CFLAGS=-Wall -I./src/include -g -O0
 LIBS=-lcheck
 
 ODIR=obj
@@ -18,6 +18,9 @@ $(EXECUTABLE): $(OBJECTS)
 
 .PHONY: clean
 
+debug: $(OBJECTS)
+	gcc -o $@ $^ $(CFLAGS) $(LIBS)
+
 test: emulator-test $(TEST_OBJECTS)
 	./emulator-test
 
@@ -25,7 +28,7 @@ emulator-test: $(TEST_OBJECTS)
 	gcc -o $@ $(TEST_OBJECTS) $(FLAGS) $(LIBS)
 
 clean:
-	@rm -f *.o emulator*  
+	@rm -f *.o emulator* debug 
 	@#[ -f "emulator" ] && rm emulator
 	@#[ -d "emulator.dSYM" ] && `rm -rf emulator.dSYM`
 	@#[ -f "emulator-test" ] && rm emulator-test
