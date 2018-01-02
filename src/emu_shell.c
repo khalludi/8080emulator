@@ -3,7 +3,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-typedef struct ConditionCodes {    
+#include "emu_shell.h"
+
+/* typedef struct ConditionCodes {    
     uint8_t    z:1;    
     uint8_t    s:1;    
     uint8_t    p:1;    
@@ -25,7 +27,7 @@ typedef struct State8080 {
     uint8_t     *memory;    
     struct      ConditionCodes      cc;    
     uint8_t     int_enable;    
-} State8080;
+} State8080; */
 
 uint8_t Parity(uint8_t num) {
     uint8_t ret = 0;
@@ -923,7 +925,7 @@ void Emulate8080Op(State8080* state)
            state->e, state->h, state->l, state->sp);
 }
 
-int main() {
+int _main() {
     printf("IT COMPILED !!!\n");
     // Create a state
     State8080 state;

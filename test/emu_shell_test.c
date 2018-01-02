@@ -5,9 +5,10 @@
  */
 
 #include <check.h>
-#include "../src/emu_shell.c"
 #include <stdlib.h>
 #include <stdio.h>
+
+#include "emu_shell.h"
 
 START_TEST(test1)
 {
@@ -25,14 +26,14 @@ START_TEST(test2)
     char * buffer = "000102"; char * pos = buffer;
     unsigned char val[3];
     for(int i = 0; i < sizeof(val); i++) {
-        sscanf(pos, "%2hhx", &val[count]);
+        sscanf(pos, "%2hhx", &val[i]);
         pos += 2;
     }
     
     state.memory = val;
     Emulate8080Op(&state);
 }
-
+END_TEST
 
 
 int main(void)
