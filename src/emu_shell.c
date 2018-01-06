@@ -192,6 +192,20 @@ void Emulate8080Op(State8080* state)
         case 0x17:                          // RAL
                    break;
         case 0x18: break;
+        case 0x19:                          // DAD D
+                   {
+                       uint16_t answer = (((uint16_t) state->d << 8) + (uint16_t) state->e) + (((uint16_t) state->h << 8) + (uint16_t) state->l);
+                       state->cc.cy = answer > 0xFFFF;
+                       state->h = (answer >> 8) & 0xFF;
+                       state->l = answer & 0xFF;
+                       break;
+                   }
+        case 0x1a:                          // LDAX D
+                   {
+                       uint16_t offset = ((uint16_t) state->d << 8) + (uint16_t) state->e;
+                       state->a = state->memory[offset];
+                       break;
+                   }
         case 0x1b:                          // DCX D
                    {
                        uint16_t answer = ((uint16_t) state->d << 8) + (uint16_t) state->e;
@@ -257,6 +271,14 @@ void Emulate8080Op(State8080* state)
                    state->pc += 1;
                    break;
         case 0x28: break;
+        case 0x29:                          // DAD H
+                   {
+                       uint16_t answer = (((uint16_t) state->h << 8) + (uint16_t) state->l) + (((uint16_t) state->h << 8) + (uint16_t) state->l);
+                       state->cc.cy = answer > 0xFFFF;
+                       state->h = (answer >> 8) & 0xFF;
+                       state->l = answer & 0xFF;
+                       break;
+                   }
         case 0x2b:                          // DCX H
                    {
                        uint16_t answer = ((uint16_t) state->h << 8) + (uint16_t) state->l;
@@ -287,6 +309,17 @@ void Emulate8080Op(State8080* state)
                    state->l = opcode[1];
                    state->pc += 1;
                    break;
+        case 0x31:                          //LXI   SP,word (D16)   
+                   state->sp = ((uint16_t) opcode[2] << 8) | opcode[1];    
+                   state->pc += 2;                  //advance 2 more bytes    
+                   break;    
+        case 0x32:                          // STA adr
+                   {
+                       uint16_t addr = ((uint16_t) opcode[2] << 8) | opcode[1];
+                       state->memory[addr] = state->a;
+                       state->pc += 2;
+                       break;
+                   }
         case 0x33:                          // INX SP
                    state->sp = (state->sp + 1) & 0xFFFF;
                    break;
@@ -314,6 +347,13 @@ void Emulate8080Op(State8080* state)
                    {
                        uint16_t offset = ((uint16_t) state->h << 8) | (state -> l);
                        state->memory[offset] = opcode[1];
+                       state->pc += 1;
+                       break;
+                   }
+        case 0x3a:                          // LDA adr
+                   {
+                       uint16_t addr = ((uint16_t) opcode[2] << 8) | opcode[1];
+                       state->a = state->memory[addr];
                        state->pc += 1;
                        break;
                    }
@@ -345,6 +385,40 @@ void Emulate8080Op(State8080* state)
         case 0x41: state->b = state->c; break;    //MOV B,C    
         case 0x42: state->b = state->d; break;    //MOV B,D    
         case 0x43: state->b = state->e; break;    //MOV B,E    
+        case 0x56:                          // MOV D,M
+                   {
+                       uint16_t offset = ((uint16_t) state->h << 8) | state->l;
+                       state->d = state->memory[offset];
+                       break;
+                   }
+        case 0x5e:                          // MOV E,M
+                   {
+                       uint16_t offset = ((uint16_t) state->h << 8) | state->l;
+                       state->e = state->memory[offset];
+                       break;
+                   }
+        case 0x66:                          // MOV H,M
+                   {
+                       uint16_t offset = ((uint16_t) state->h << 8) | state->l;
+                       state->h = state->memory[offset];
+                       break;
+                   }
+        case 0x6f: state->l = state->a; break;      // MOV L,A
+        case 0x77:                          // MOV M,A
+                   {
+                       uint16_t offset = ((uint16_t) state->h << 8) | state->l;
+                       state->memory[offset] = state->a;
+                       break;
+                   }
+        case 0x7a: state->a = state->d; break;      // MOV A,D
+        case 0x7b: state->a = state->e; break;      // MOV A,E
+        case 0x7c: state->a = state->h; break;      // MOV A,H
+        case 0x7e:                          // MOV A,M
+                   {
+                       uint16_t offset = ((uint16_t) state->h << 8) | state->l;
+                       state->a = state->memory[offset];
+                       break;
+                   }
                    /*******************   ADD   ***********************/
         case 0x80:
                    {
@@ -994,7 +1068,13 @@ void Emulate8080Op(State8080* state)
                        state->cc.p = Parity(answer & 0xff);
                        break;
                    }
-        case 0xc2:
+        case 0xc1:                          // POP B
+                   {
+                       state->c = state->memory[state->sp];
+                       state->b = state->memory[state->sp+1];
+                       state->sp += 2;
+                   }
+        case 0xc2:                          // JNZ adr
                    {
                        if (state->cc.z == 0) {
                            state->pc = (opcode[2] << 8) | opcode[1];
@@ -1003,12 +1083,19 @@ void Emulate8080Op(State8080* state)
                        }
                        break;
                    }
-        case 0xc3:
+        case 0xc3:                          // JMP adr
                    {
                        state->pc = (opcode[2] << 8) | opcode[1];
                        break;
                    }
-        case 0xc6:
+        case 0xc5:                          // PUSH B
+                   {
+                       state->sp -= 2;
+                       state->memory[state->sp] = state->c;
+                       state->memory[state->sp+1] = state->b;
+                       break;
+                   }
+        case 0xc6:                          // ADI D8
                    {
                        uint16_t answer = (uint16_t) state->a + (uint16_t) opcode[1];
                        state->cc.z = ((answer & 0xff) == 0);
@@ -1018,13 +1105,113 @@ void Emulate8080Op(State8080* state)
                        state->a = answer & 0xff;
                        break;
                    }
-        case 0xca:
+        case 0xc9:                          // RET
+                   {
+                       uint16_t _pc = (state->memory[state->sp+1] << 8) | state->memory[state->sp];
+                       state->pc = _pc;
+                       state->sp += 2;
+                       break;
+                   }
+        case 0xca:                          // JZ adr
                    {
                        if (state->cc.z == 1) {
                            state->pc = (opcode[2] << 8) | opcode[1];
                        } else {
                            state->pc += 2;
                        }
+                       break;
+                   }
+        case 0xcd:                          // CALL adr
+                   {
+                       uint16_t _pc = ((state->memory[state->sp-1]) << 8) | (state->memory[state->sp-2]);
+                       state->sp -= 2;
+                       state->pc = _pc;
+                   }
+        case 0xd1:                          // POP D
+                   {
+                       state->e = state->memory[state->sp];
+                       state->d = state->memory[state->sp+1];
+                       state->sp += 2;
+                       break;
+                   }
+        case 0xd3:                          // OUT D8
+                   {
+                       state->pc += 1;
+                       break;
+                   }
+        case 0xd5:                          // PUSH D
+                   {
+                       state->sp -= 2;
+                       state->memory[state->sp] = state->e;
+                       state->memory[state->sp+1] = state->d;
+                       break;
+                   }
+        case 0xe1:                          // POP H
+                   {
+                       state->l = state->memory[state->sp];
+                       state->h = state->memory[state->sp+1];
+                       state->sp += 2;
+                   }
+        case 0xe5:                          // PUSH H
+                   {
+                       state->sp -= 2;
+                       state->memory[state->sp] = state->l;
+                       state->memory[state->sp+1] = state->h;
+                       break;
+                   }
+        case 0xe6:                          // ANI D8
+                   {
+                       uint16_t answer = state->a & state->memory[state->pc+1];
+                       state->cc.cy = 0;
+                       state->cc.z = ((state->a & 0x0F) == 0x00);
+                       state->cc.p = Parity(answer);
+                       state->cc.s = ((answer & 0x80) != 0);
+                       state->pc += 1;
+                       state->a = answer;
+                       break;
+                   }
+        case 0xeb:                          // XCHG
+                   {
+                       uint8_t tmp1 = state->e;
+                       uint8_t tmp2 = state->d;
+                       state->e = state->l;
+                       state->d = state->h;
+                       state->l = tmp1;
+                       state->h = tmp2;
+                       break;
+                   }
+        case 0xf1:                          // POP PSW
+                   {
+                       uint8_t answer = state->memory[state->sp];
+                       state->cc.s = ((answer & 0x80) >> 7) == 0x01;
+                       state->cc.z = ((answer & 0x40) >> 6) == 0x01;
+                       state->cc.ac = ((answer & 0x10) >> 4) == 0x01;
+                       state->cc.p = ((answer & 0x04) >> 2) == 0x01;
+                       state->cc.cy = (answer & 0x01) == 0x01;
+                       state->a = state->memory[state->sp+1];
+                       state->sp += 2;
+                       break;
+                   }
+        case 0xf5:                          // PUSH PSW
+                   {
+                       uint8_t answer = 0x02 | state->cc.cy;
+                       answer = answer | (state->cc.p << 2);
+                       answer = answer | (state->cc.ac << 4);
+                       answer = answer | (state->cc.z << 6);
+                       answer = answer | (state->cc.s << 7);
+                       state->memory[state->sp-1] = state->a;
+                       state->memory[state->sp-2] = answer;
+                       state->sp -= 2;
+                       break;
+                   }
+        case 0xfe:                          // CPI D8
+                   {
+                       uint16_t answer = (uint16_t) state->a + ~((uint16_t) state->memory[state->pc+1]) + 1;
+                       state->cc.z = ((answer & 0xff) == 0);
+                       state->cc.s = ((answer & 0x80) != 0);
+                       state->cc.cy = ~(answer > 0xff);
+                       state->cc.p = Parity(answer & 0xff);
+                       break;
                    }
 
         default:   UnimplementedInstruction(state); break;
@@ -1034,9 +1221,9 @@ void Emulate8080Op(State8080* state)
     /* print out processor state */
     printf("\tC=%d,P=%d,S=%d,Z=%d\n", state->cc.cy, state->cc.p,
             state->cc.s, state->cc.z);
-    printf("\tA $%02x B $%02x C $%02x D $%02x E $%02x H $%02x L $%02x SP %04x\n",
+    printf("\tA $%02x B $%02x C $%02x D $%02x E $%02x H $%02x L $%02x PC %04x SP %04x\n",
             state->a, state->b, state->c, state->d,
-            state->e, state->h, state->l, state->sp);
+            state->e, state->h, state->l, state->pc, state->sp);
 }
 
 int _main() {

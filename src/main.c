@@ -18,6 +18,8 @@ int main() {
     char *buffer = (char *)malloc((filelen+1)*sizeof(char));
     fread(buffer, filelen, 1, fileptr);
     state.memory = (uint8_t *) buffer;
+    
+    state.sp = 0xf000;
     // Call Emulate
     // Repeat emulator
     while(1) {
