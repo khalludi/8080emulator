@@ -44,7 +44,7 @@ uint8_t Parity(uint8_t num) {
 void UnimplementedInstruction(State8080* state)    
 {    
     //pc will have advanced one, so undo that    
-    printf ("Error: Unimplemented instruction\n");    
+    printf ("Error: Unimplemented instruction %02x, %02x, %02x\n", state->memory[state->pc], state->memory[state->pc+1], state->memory[state->pc+2]);    
     exit(1);    
 }
 
@@ -56,8 +56,8 @@ void Emulate8080Op(State8080* state)
     {    
         case 0x00: break;                   //NOP is easy!    
         case 0x01:                          //LXI   B,word    
-                   state->c = opcode[1];    
-                   state->b = opcode[2];    
+                   state->c = state->memory[state->pc+1];    
+                   state->b = state->memory[state->pc+2];    
                    state->pc += 2;                  //advance 2 more bytes    
                    break;    
         case 0x02:                          // STAX B
@@ -78,7 +78,7 @@ void Emulate8080Op(State8080* state)
                        uint8_t answer = state->b + 1;
                        state->b = answer;
                        state->cc.z = (answer == 0);
-                       state->cc.s = ((answer & 0x80) == 0);
+                       state->cc.s = ((answer & 0x80) != 0);
                        state->cc.p = Parity(answer);
                        break;
                    }
@@ -87,7 +87,7 @@ void Emulate8080Op(State8080* state)
                        uint8_t answer = state->b + ~(0x01) + 1;
                        state->b = answer;
                        state->cc.z = (answer == 0);
-                       state->cc.s = ((answer & 0x80) == 0);
+                       state->cc.s = ((answer & 0x80) != 0);
                        state->cc.p = Parity(answer);
                        break;
                    }
@@ -127,7 +127,7 @@ void Emulate8080Op(State8080* state)
                        uint8_t answer = state->c + 1;
                        state->c = answer;
                        state->cc.z = (answer == 0);
-                       state->cc.s = ((answer & 0x80) == 0);
+                       state->cc.s = ((answer & 0x80) != 0);
                        state->cc.p = Parity(answer);
                        break;
                    }
@@ -136,7 +136,7 @@ void Emulate8080Op(State8080* state)
                        uint8_t answer = state->c + ~(0x01) + 1;
                        state->c = answer;
                        state->cc.z = (answer == 0);
-                       state->cc.s = ((answer & 0x80) == 0);
+                       state->cc.s = ((answer & 0x80) != 0);
                        state->cc.p = Parity(answer);
                        break;
                    }
@@ -172,7 +172,7 @@ void Emulate8080Op(State8080* state)
                        uint8_t answer = state->d + 1;
                        state->d = answer;
                        state->cc.z = (answer == 0);
-                       state->cc.s = ((answer & 0x80) == 0);
+                       state->cc.s = ((answer & 0x80) != 0);
                        state->cc.p = Parity(answer);
                        break;
                    }
@@ -181,7 +181,7 @@ void Emulate8080Op(State8080* state)
                        uint8_t answer = state->d + ~(0x01) + 1;
                        state->d = answer;
                        state->cc.z = (answer == 0);
-                       state->cc.s = ((answer & 0x80) == 0);
+                       state->cc.s = ((answer & 0x80) != 0);
                        state->cc.p = Parity(answer);
                        break;
                    }
@@ -219,7 +219,7 @@ void Emulate8080Op(State8080* state)
                        uint8_t answer = state->e + 1;
                        state->e = answer;
                        state->cc.z = (answer == 0);
-                       state->cc.s = ((answer & 0x80) == 0);
+                       state->cc.s = ((answer & 0x80) != 0);
                        state->cc.p = Parity(answer);
                        break;
                    }
@@ -228,7 +228,7 @@ void Emulate8080Op(State8080* state)
                        uint8_t answer = state->e + ~(0x01) + 1;
                        state->e = answer;
                        state->cc.z = (answer == 0);
-                       state->cc.s = ((answer & 0x80) == 0);
+                       state->cc.s = ((answer & 0x80) != 0);
                        state->cc.p = Parity(answer);
                        break;
                    }
@@ -253,7 +253,7 @@ void Emulate8080Op(State8080* state)
                        uint8_t answer = state->h + 1;
                        state->h = answer;
                        state->cc.z = (answer == 0);
-                       state->cc.s = ((answer & 0x80) == 0);
+                       state->cc.s = ((answer & 0x80) != 0);
                        state->cc.p = Parity(answer);
                        break;
                    }
@@ -262,7 +262,7 @@ void Emulate8080Op(State8080* state)
                        uint8_t answer = state->h + ~(0x01) + 1;
                        state->h = answer;
                        state->cc.z = (answer == 0);
-                       state->cc.s = ((answer & 0x80) == 0);
+                       state->cc.s = ((answer & 0x80) != 0);
                        state->cc.p = Parity(answer);
                        break;
                    }
@@ -292,7 +292,7 @@ void Emulate8080Op(State8080* state)
                        uint8_t answer = state->l + 1;
                        state->l = answer;
                        state->cc.z = (answer == 0);
-                       state->cc.s = ((answer & 0x80) == 0);
+                       state->cc.s = ((answer & 0x80) != 0);
                        state->cc.p = Parity(answer);
                        break;
                    }
@@ -301,7 +301,7 @@ void Emulate8080Op(State8080* state)
                        uint8_t answer = state->l + ~(0x01) + 1;
                        state->l = answer;
                        state->cc.z = (answer == 0);
-                       state->cc.s = ((answer & 0x80) == 0);
+                       state->cc.s = ((answer & 0x80) != 0);
                        state->cc.p = Parity(answer);
                        break;
                    }
@@ -329,7 +329,7 @@ void Emulate8080Op(State8080* state)
                        uint16_t answer = state->memory[offset] + 1; 
                        state->memory[offset] = answer;
                        state->cc.z = (answer == 0);
-                       state->cc.s = ((answer & 0x80) == 0);
+                       state->cc.s = ((answer & 0x80) != 0);
                        state->cc.p = Parity(answer & 0xFF);
                        break;
                    }
@@ -339,7 +339,7 @@ void Emulate8080Op(State8080* state)
                        uint16_t answer = state->memory[offset] + ~(0x01) + 1;
                        state->memory[offset] = answer;
                        state->cc.z = (answer == 0);
-                       state->cc.s = ((answer & 0x80) == 0);
+                       state->cc.s = ((answer & 0x80) != 0);
                        state->cc.p = Parity(answer);
                        break;
                    }
@@ -354,7 +354,7 @@ void Emulate8080Op(State8080* state)
                    {
                        uint16_t addr = ((uint16_t) opcode[2] << 8) | opcode[1];
                        state->a = state->memory[addr];
-                       state->pc += 1;
+                       state->pc += 2;
                        break;
                    }
         case 0x3b:                          // DCX SP
@@ -365,7 +365,7 @@ void Emulate8080Op(State8080* state)
                        uint8_t answer = state->a + 1;
                        state->a = answer;
                        state->cc.z = (answer == 0);
-                       state->cc.s = ((answer & 0x80) == 0);
+                       state->cc.s = ((answer & 0x80) != 0);
                        state->cc.p = Parity(answer);
                        break;
                    }
@@ -374,7 +374,7 @@ void Emulate8080Op(State8080* state)
                        uint8_t answer = state->a + ~(0x01) + 1;
                        state->a = answer;
                        state->cc.z = (answer == 0);
-                       state->cc.s = ((answer & 0x80) == 0);
+                       state->cc.s = ((answer & 0x80) != 0);
                        state->cc.p = Parity(answer);
                        break;
                    }
@@ -1073,11 +1073,13 @@ void Emulate8080Op(State8080* state)
                        state->c = state->memory[state->sp];
                        state->b = state->memory[state->sp+1];
                        state->sp += 2;
+                       break;
                    }
         case 0xc2:                          // JNZ adr
                    {
                        if (state->cc.z == 0) {
                            state->pc = (opcode[2] << 8) | opcode[1];
+                           state->pc = state->pc - 1;
                        } else {
                            state->pc += 2;
                        }
@@ -1086,6 +1088,7 @@ void Emulate8080Op(State8080* state)
         case 0xc3:                          // JMP adr
                    {
                        state->pc = (opcode[2] << 8) | opcode[1];
+                       state->pc = state->pc - 1;
                        break;
                    }
         case 0xc5:                          // PUSH B
@@ -1103,12 +1106,13 @@ void Emulate8080Op(State8080* state)
                        state->cc.cy = (answer > 0xff);
                        state->cc.p = Parity(answer & 0xff);
                        state->a = answer & 0xff;
+                       state->pc += 1;
                        break;
                    }
         case 0xc9:                          // RET
                    {
-                       uint16_t _pc = (state->memory[state->sp+1] << 8) | state->memory[state->sp];
-                       state->pc = _pc;
+                       uint16_t _pc = (state->memory[state->sp] << 8) | state->memory[state->sp+1];
+                       state->pc = _pc+2;
                        state->sp += 2;
                        break;
                    }
@@ -1123,9 +1127,12 @@ void Emulate8080Op(State8080* state)
                    }
         case 0xcd:                          // CALL adr
                    {
-                       uint16_t _pc = ((state->memory[state->sp-1]) << 8) | (state->memory[state->sp-2]);
-                       state->sp -= 2;
-                       state->pc = _pc;
+                       uint16_t _pc = ((state->memory[state->pc+2]) << 8) | (state->memory[state->pc+1]);
+                       state->memory[state->sp-1] = (uint8_t) (state->pc & 0xff);
+                       state->memory[state->sp-2] = (uint8_t) (state->pc >> 8);
+                       state->sp = (uint16_t) (state->sp - 2);
+                       state->pc = _pc - 1;
+                       break;
                    }
         case 0xd1:                          // POP D
                    {
@@ -1151,6 +1158,7 @@ void Emulate8080Op(State8080* state)
                        state->l = state->memory[state->sp];
                        state->h = state->memory[state->sp+1];
                        state->sp += 2;
+                       break;
                    }
         case 0xe5:                          // PUSH H
                    {
@@ -1204,13 +1212,15 @@ void Emulate8080Op(State8080* state)
                        state->sp -= 2;
                        break;
                    }
+        case 0xfb: break;                   // EI
         case 0xfe:                          // CPI D8
                    {
                        uint16_t answer = (uint16_t) state->a + ~((uint16_t) state->memory[state->pc+1]) + 1;
                        state->cc.z = ((answer & 0xff) == 0);
                        state->cc.s = ((answer & 0x80) != 0);
-                       state->cc.cy = ~(answer > 0xff);
+                       state->cc.cy = (answer > 0xff);
                        state->cc.p = Parity(answer & 0xff);
+                       state->pc += 1;
                        break;
                    }
 
@@ -1218,12 +1228,13 @@ void Emulate8080Op(State8080* state)
 
     }    
     state->pc+=1;    
-    /* print out processor state */
+    /*/ print out processor state 
     printf("\tC=%d,P=%d,S=%d,Z=%d\n", state->cc.cy, state->cc.p,
             state->cc.s, state->cc.z);
     printf("\tA $%02x B $%02x C $%02x D $%02x E $%02x H $%02x L $%02x PC %04x SP %04x\n",
             state->a, state->b, state->c, state->d,
             state->e, state->h, state->l, state->pc, state->sp);
+   */ 
 }
 
 int _main() {
@@ -1242,9 +1253,7 @@ int _main() {
     state.memory = (uint8_t *) buffer;
     // Call Emulate
     // Repeat emulator
-    while(true) {
-        Emulate8080Op(&state);
-    }
+    Emulate8080Op(&state);
 
     return 0;
 }

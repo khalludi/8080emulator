@@ -18,14 +18,14 @@ $(EXECUTABLE): $(OBJECTS)
 
 .PHONY: clean
 
-debug: $(OBJECTS)
-	gcc -o $@ $^ $(CFLAGS) $(LIBS)
+#debug: $(OBJECTS)
+#	gcc -o $@ $^ $(CFLAGS) $(LIBS)
 
 test: emulator-test $(TEST_OBJECTS)
 	./emulator-test
 
 emulator-test: $(TEST_OBJECTS)
-	gcc -o $@ $(TEST_OBJECTS) $(FLAGS) $(LIBS)
+	gcc -g -O0 -o $@ $(TEST_OBJECTS) $(FLAGS) $(LIBS) -I./src/include
 
 clean:
 	@rm -f *.o emulator* debug 
