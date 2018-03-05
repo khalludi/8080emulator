@@ -47,23 +47,40 @@ void UnimplementedInstruction(State8080* state)
     printf ("Error: Unimplemented instruction %02x, %02x, %02x\n", state->memory[state->pc], state->memory[state->pc+1], state->memory[state->pc+2]);    
     exit(1);    
 }
+/*
+char numCycles(State8080* state) {
+    char cycles = 0;
+    unsigned char *opcode = &state->memory[state->pc];
 
-void Emulate8080Op(State8080* state)    
-{    
+    switch(*opcode) {
+        case 0x00:
+        case 0x08:
+            cycles = 4;
+            break;
+    }
+    return cycles;
+}
+*/
+
+char Emulate8080Op(State8080* state)    
+{   
+    char cycles = 0;
     unsigned char *opcode = &state->memory[state->pc];
 
     switch(*opcode)    
     {    
-        case 0x00: break;                   //NOP is easy!    
+        case 0x00: cycles = 4; break;                   //NOP is easy!    
         case 0x01:                          //LXI   B,word    
                    state->c = state->memory[state->pc+1];    
                    state->b = state->memory[state->pc+2];    
                    state->pc += 2;                  //advance 2 more bytes    
+                   cycles = 10;
                    break;    
         case 0x02:                          // STAX B
                    {
                        uint16_t offset = ((uint16_t) state->b << 8) + (uint16_t) state->c;
                        state->memory[offset] = state->a;
+                       cycles = 7;
                        break;
                    }
         case 0x03:                          // INX B
@@ -71,6 +88,7 @@ void Emulate8080Op(State8080* state)
                        uint16_t answer = ((uint16_t) state->b << 8) + (uint16_t) state->c + 1;
                        state->b = (answer >> 8) & 0xFF;
                        state->c = answer & 0xFF;
+                       cycles = 5;
                        break;
                    }
         case 0x04:                          // INR B
@@ -80,6 +98,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.z = (answer == 0);
                        state->cc.s = ((answer & 0x80) != 0);
                        state->cc.p = Parity(answer);
+                       cycles = 5;
                        break;
                    }
         case 0x05:                          // DCR B
@@ -89,29 +108,34 @@ void Emulate8080Op(State8080* state)
                        state->cc.z = (answer == 0);
                        state->cc.s = ((answer & 0x80) != 0);
                        state->cc.p = Parity(answer);
+                       cycles = 5;
                        break;
                    }
         case 0x06:                          // MVI B,D8
                    state->b = opcode[1];
                    state->pc += 1;
+                   cycles = 7;
                    break;
         case 0x07:                          // RLC
                    state->cc.cy = state->a & 0x80;
                    state->a = (state->a << 1) + state->cc.cy;
+                   cycles = 4;
                    break;
-        case 0x08: break;
+        case 0x08: cycles = 4; break;
         case 0x09:                          // DAD B
                    {
                        uint16_t answer = (((uint16_t) state->b << 8) + (uint16_t) state->c) + (((uint16_t) state->h << 8) + (uint16_t) state->l);
                        state->cc.cy = answer > 0xFFFF;
                        state->h = (answer >> 8) & 0xFF;
                        state->l = answer & 0xFF;
+                       cycles = 10;
                        break;
                    }
         case 0x0a:                          // LDAX B
                    {
                        uint16_t offset = ((uint16_t) state->b << 8) + (uint16_t) state->c;
                        state->a = state->memory[offset];
+                       cycles = 7;
                        break;
                    }
         case 0x0b:                          // DCX B
@@ -120,6 +144,7 @@ void Emulate8080Op(State8080* state)
                        answer = answer + ~(0x0001) + 1;
                        state->b = (answer >> 8) & 0xFF;
                        state->c = answer & 0xFF;
+                       cycles = 5;
                        break;
                    }
         case 0x0c:                          // INR C
@@ -129,6 +154,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.z = (answer == 0);
                        state->cc.s = ((answer & 0x80) != 0);
                        state->cc.p = Parity(answer);
+                       cycles = 5;
                        break;
                    }
         case 0x0d:                          // DCR C
@@ -138,26 +164,31 @@ void Emulate8080Op(State8080* state)
                        state->cc.z = (answer == 0);
                        state->cc.s = ((answer & 0x80) != 0);
                        state->cc.p = Parity(answer);
+                       cycles = 5;
                        break;
                    }
         case 0x0e:                          // MVI C,D8
                    state->c = opcode[1];
                    state->pc += 1;
+                   cycles = 7;
                    break;
         case 0x0f:                          // RRC
                    state->cc.cy = state->a & 0x01;
                    state->a = (state->a >> 1) + (state->cc.cy << 7);
+                   cycles = 4;
                    break;
-        case 0x10: break;
+        case 0x10: cycles = 4; break;
         case 0x11:                          //LXI   D,word    
                    state->e = opcode[1];    
                    state->d = opcode[2];    
                    state->pc += 2;                  //advance 2 more bytes    
+                   cycles = 10;
                    break;    
         case 0x12:                          // STAX D
                    {
                        uint16_t offset = ((uint16_t) state->d << 8) + (uint16_t) state->e;
                        state->memory[offset] = state->a;
+                       cycles = 7;
                        break;
                    }
         case 0x13:                          // INX D
@@ -165,6 +196,7 @@ void Emulate8080Op(State8080* state)
                        uint16_t answer = ((uint16_t) state->d << 8) + (uint16_t) state->e + 1;
                        state->d = (answer >> 8) & 0xFF;
                        state->e = answer & 0xFF;
+                       cycles = 5;
                        break;
                    }
         case 0x14:                          // INR D
@@ -174,6 +206,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.z = (answer == 0);
                        state->cc.s = ((answer & 0x80) != 0);
                        state->cc.p = Parity(answer);
+                       cycles = 5;
                        break;
                    }
         case 0x15:                          // DCR D
@@ -183,27 +216,32 @@ void Emulate8080Op(State8080* state)
                        state->cc.z = (answer == 0);
                        state->cc.s = ((answer & 0x80) != 0);
                        state->cc.p = Parity(answer);
+                       cycles = 5;
                        break;
                    }
         case 0x16:                          // MVI D,D8
                    state->d = opcode[1];
                    state->pc += 1;
+                   cycles = 7;
                    break;
         case 0x17:                          // RAL
+                   cycles = 4;
                    break;
-        case 0x18: break;
+        case 0x18: cycles = 4; break;
         case 0x19:                          // DAD D
                    {
                        uint16_t answer = (((uint16_t) state->d << 8) + (uint16_t) state->e) + (((uint16_t) state->h << 8) + (uint16_t) state->l);
                        state->cc.cy = answer > 0xFFFF;
                        state->h = (answer >> 8) & 0xFF;
                        state->l = answer & 0xFF;
+                       cycles = 10;
                        break;
                    }
         case 0x1a:                          // LDAX D
                    {
                        uint16_t offset = ((uint16_t) state->d << 8) + (uint16_t) state->e;
                        state->a = state->memory[offset];
+                       cycles = 7;
                        break;
                    }
         case 0x1b:                          // DCX D
@@ -212,6 +250,7 @@ void Emulate8080Op(State8080* state)
                        answer = answer + ~(0x0001) + 1;
                        state->d = (answer >> 8) & 0xFF;
                        state->e = answer & 0xFF;
+                       cycles = 5;
                        break;
                    }
         case 0x1c:                          // INR E
@@ -221,6 +260,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.z = (answer == 0);
                        state->cc.s = ((answer & 0x80) != 0);
                        state->cc.p = Parity(answer);
+                       cycles = 5;
                        break;
                    }
         case 0x1d:                          // DCR E
@@ -230,22 +270,26 @@ void Emulate8080Op(State8080* state)
                        state->cc.z = (answer == 0);
                        state->cc.s = ((answer & 0x80) != 0);
                        state->cc.p = Parity(answer);
+                       cycles = 5;
                        break;
                    }
         case 0x1e:                          // MVI E,D8
                    state->e = opcode[1];
                    state->pc += 1;
+                   cycles = 7;
                    break;
         case 0x21:                          //LXI   H,word    
                    state->l = opcode[1];    
                    state->h = opcode[2];    
                    state->pc += 2;                  //advance 2 more bytes    
+                   cycles = 10;
                    break;    
         case 0x23:                          // INX H
                    {
                        uint16_t answer = ((uint16_t) state->h << 8) + (uint16_t) state->l + 1;
                        state->h = (answer >> 8) & 0xFF;
                        state->l = answer & 0xFF;
+                       cycles = 5;
                        break;
                    }
         case 0x24:                          // INR H
@@ -255,6 +299,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.z = (answer == 0);
                        state->cc.s = ((answer & 0x80) != 0);
                        state->cc.p = Parity(answer);
+                       cycles = 5;
                        break;
                    }
         case 0x25:                          // DCR H
@@ -264,19 +309,22 @@ void Emulate8080Op(State8080* state)
                        state->cc.z = (answer == 0);
                        state->cc.s = ((answer & 0x80) != 0);
                        state->cc.p = Parity(answer);
+                       cycles = 5;
                        break;
                    }
         case 0x26:                          // MVI H,D8
                    state->h = opcode[1];
                    state->pc += 1;
+                   cycles = 7;
                    break;
-        case 0x28: break;
+        case 0x28: cycles = 4; break;
         case 0x29:                          // DAD H
                    {
                        uint16_t answer = (((uint16_t) state->h << 8) + (uint16_t) state->l) + (((uint16_t) state->h << 8) + (uint16_t) state->l);
                        state->cc.cy = answer > 0xFFFF;
                        state->h = (answer >> 8) & 0xFF;
                        state->l = answer & 0xFF;
+                       cycles = 10;
                        break;
                    }
         case 0x2b:                          // DCX H
@@ -285,6 +333,7 @@ void Emulate8080Op(State8080* state)
                        answer = answer + ~(0x0001) + 1;
                        state->h = (answer >> 8) & 0xFF;
                        state->l = answer & 0xFF;
+                       cycles = 5;
                        break;
                    }
         case 0x2c:                          // INR L
@@ -294,6 +343,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.z = (answer == 0);
                        state->cc.s = ((answer & 0x80) != 0);
                        state->cc.p = Parity(answer);
+                       cycles = 5;
                        break;
                    }
         case 0x2d:                          // DCR L
@@ -303,25 +353,30 @@ void Emulate8080Op(State8080* state)
                        state->cc.z = (answer == 0);
                        state->cc.s = ((answer & 0x80) != 0);
                        state->cc.p = Parity(answer);
+                       cycles = 5;
                        break;
                    }
         case 0x2e:                          // MVI L,D8
                    state->l = opcode[1];
                    state->pc += 1;
+                   cycles = 7;
                    break;
         case 0x31:                          //LXI   SP,word (D16)   
                    state->sp = ((uint16_t) opcode[2] << 8) | opcode[1];    
                    state->pc += 2;                  //advance 2 more bytes    
+                   cycles = 10;
                    break;    
         case 0x32:                          // STA adr
                    {
                        uint16_t addr = ((uint16_t) opcode[2] << 8) | opcode[1];
                        state->memory[addr] = state->a;
                        state->pc += 2;
+                       cycles = 13;
                        break;
                    }
         case 0x33:                          // INX SP
                    state->sp = (state->sp + 1) & 0xFFFF;
+                   cycles = 5;
                    break;
         case 0x34:                          // INR M
                    {
@@ -331,6 +386,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.z = (answer == 0);
                        state->cc.s = ((answer & 0x80) != 0);
                        state->cc.p = Parity(answer & 0xFF);
+                       cycles = 10;
                        break;
                    }
         case 0x35:                          // DCR M
@@ -341,6 +397,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.z = (answer == 0);
                        state->cc.s = ((answer & 0x80) != 0);
                        state->cc.p = Parity(answer);
+                       cycles = 10;
                        break;
                    }
         case 0x36:                          // MVI M,D8
@@ -348,6 +405,7 @@ void Emulate8080Op(State8080* state)
                        uint16_t offset = ((uint16_t) state->h << 8) | (state -> l);
                        state->memory[offset] = opcode[1];
                        state->pc += 1;
+                       cycles = 10;
                        break;
                    }
         case 0x3a:                          // LDA adr
@@ -355,10 +413,12 @@ void Emulate8080Op(State8080* state)
                        uint16_t addr = ((uint16_t) opcode[2] << 8) | opcode[1];
                        state->a = state->memory[addr];
                        state->pc += 2;
+                       cycles = 13;
                        break;
                    }
         case 0x3b:                          // DCX SP
                    state->sp = (state->sp + ~(0x0001) + 1) & 0xFFFF;
+                   cycles = 5;
                    break;
         case 0x3c:                          // INR A
                    {
@@ -367,6 +427,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.z = (answer == 0);
                        state->cc.s = ((answer & 0x80) != 0);
                        state->cc.p = Parity(answer);
+                       cycles = 5;
                        break;
                    }
         case 0x3d:                          // DCR A
@@ -376,47 +437,54 @@ void Emulate8080Op(State8080* state)
                        state->cc.z = (answer == 0);
                        state->cc.s = ((answer & 0x80) != 0);
                        state->cc.p = Parity(answer);
+                       cycles = 5;
                        break;
                    }
         case 0x3e:                          // MVI A,D8
                    state->a = opcode[1];
                    state->pc += 1;
+                   cycles = 7;
                    break;
-        case 0x41: state->b = state->c; break;    //MOV B,C    
-        case 0x42: state->b = state->d; break;    //MOV B,D    
-        case 0x43: state->b = state->e; break;    //MOV B,E    
+        case 0x41: state->b = state->c; cycles = 5; break;    //MOV B,C    
+        case 0x42: state->b = state->d; cycles = 5; break;    //MOV B,D    
+        case 0x43: state->b = state->e; cycles = 5; break;    //MOV B,E    
         case 0x56:                          // MOV D,M
                    {
                        uint16_t offset = ((uint16_t) state->h << 8) | state->l;
                        state->d = state->memory[offset];
+                       cycles = 7;
                        break;
                    }
         case 0x5e:                          // MOV E,M
                    {
                        uint16_t offset = ((uint16_t) state->h << 8) | state->l;
                        state->e = state->memory[offset];
+                       cycles = 7;
                        break;
                    }
         case 0x66:                          // MOV H,M
                    {
                        uint16_t offset = ((uint16_t) state->h << 8) | state->l;
                        state->h = state->memory[offset];
+                       cycles = 7;
                        break;
                    }
-        case 0x6f: state->l = state->a; break;      // MOV L,A
+        case 0x6f: state->l = state->a; cycles = 5; break;      // MOV L,A
         case 0x77:                          // MOV M,A
                    {
                        uint16_t offset = ((uint16_t) state->h << 8) | state->l;
                        state->memory[offset] = state->a;
+                       cycles = 7;
                        break;
                    }
-        case 0x7a: state->a = state->d; break;      // MOV A,D
-        case 0x7b: state->a = state->e; break;      // MOV A,E
-        case 0x7c: state->a = state->h; break;      // MOV A,H
+        case 0x7a: state->a = state->d; cycles = 5; break;      // MOV A,D
+        case 0x7b: state->a = state->e; cycles = 5; break;      // MOV A,E
+        case 0x7c: state->a = state->h; cycles = 5; break;      // MOV A,H
         case 0x7e:                          // MOV A,M
                    {
                        uint16_t offset = ((uint16_t) state->h << 8) | state->l;
                        state->a = state->memory[offset];
+                       cycles = 7;
                        break;
                    }
                    /*******************   ADD   ***********************/
@@ -428,6 +496,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.cy = (answer > 0xff);
                        state->cc.p = Parity(answer & 0xff);
                        state->a = answer & 0xff;
+                       cycles = 4;
                        break;
                    }
         case 0x81:
@@ -438,6 +507,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.cy = (answer > 0xff);
                        state->cc.p = Parity(answer & 0xff);
                        state->a = answer & 0xff;
+                       cycles = 4;
                        break;
                    }
 
@@ -449,6 +519,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.cy = (answer > 0xff);
                        state->cc.p = Parity(answer & 0xff);
                        state->a = answer & 0xff;
+                       cycles = 4;
                        break;
                    }
         case 0x83:
@@ -459,6 +530,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.cy = (answer > 0xff);
                        state->cc.p = Parity(answer & 0xff);
                        state->a = answer & 0xff;
+                       cycles = 4;
                        break;
                    }
         case 0x84:
@@ -469,6 +541,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.cy = (answer > 0xff);
                        state->cc.p = Parity(answer & 0xff);
                        state->a = answer & 0xff;
+                       cycles = 4;
                        break;
                    }
         case 0x85:
@@ -479,6 +552,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.cy = (answer > 0xff);
                        state->cc.p = Parity(answer & 0xff);
                        state->a = answer & 0xff;
+                       cycles = 4;
                        break;
                    }
         case 0x86:
@@ -490,6 +564,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.cy = (answer > 0xff);
                        state->cc.p = Parity(answer & 0xff);
                        state->a = answer & 0xff;
+                       cycles = 7;
                        break;
                    }
         case 0x87:
@@ -500,6 +575,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.cy = (answer > 0xff);
                        state->cc.p = Parity(answer & 0xff);
                        state->a = answer & 0xff;
+                       cycles = 4;
                        break;
                    }
                    /*******************   ADC   ********************/
@@ -511,6 +587,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.cy = (answer > 0xff);
                        state->cc.p = Parity(answer & 0xff);
                        state->a = answer & 0xff;
+                       cycles = 4;
                        break;
                    }
         case 0x89:
@@ -521,6 +598,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.cy = (answer > 0xff);
                        state->cc.p = Parity(answer & 0xff);
                        state->a = answer & 0xff;
+                       cycles = 4;
                        break;
                    }
         case 0x8a:
@@ -531,6 +609,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.cy = (answer > 0xff);
                        state->cc.p = Parity(answer & 0xff);
                        state->a = answer & 0xff;
+                       cycles = 4;
                        break;
                    }
         case 0x8b:
@@ -541,6 +620,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.cy = (answer > 0xff);
                        state->cc.p = Parity(answer & 0xff);
                        state->a = answer & 0xff;
+                       cycles = 4;
                        break;
                    }
         case 0x8c:
@@ -551,6 +631,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.cy = (answer > 0xff);
                        state->cc.p = Parity(answer & 0xff);
                        state->a = answer & 0xff;
+                       cycles = 4;
                        break;
                    }
         case 0x8d:
@@ -561,6 +642,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.cy = (answer > 0xff);
                        state->cc.p = Parity(answer & 0xff);
                        state->a = answer & 0xff;
+                       cycles = 4;
                        break;
                    }
         case 0x8e:
@@ -572,6 +654,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.cy = (answer > 0xff);
                        state->cc.p = Parity(answer & 0xff);
                        state->a = answer & 0xff;
+                       cycles = 7;
                        break;
                    }
         case 0x8f:
@@ -582,6 +665,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.cy = (answer > 0xff);
                        state->cc.p = Parity(answer & 0xff);
                        state->a = answer & 0xff;
+                       cycles = 4;
                        break;
                    }
                    /*******************   SUB   ********************/
@@ -593,6 +677,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.cy = ~(answer > 0xff);
                        state->cc.p = Parity(answer & 0xff);
                        state->a = answer & 0xff;
+                       cycles = 4;
                        break;
                    }
         case 0x91:
@@ -603,6 +688,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.cy = ~(answer > 0xff);
                        state->cc.p = Parity(answer & 0xff);
                        state->a = answer & 0xff;
+                       cycles = 4;
                        break;
                    }
         case 0x92:
@@ -613,6 +699,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.cy = ~(answer > 0xff);
                        state->cc.p = Parity(answer & 0xff);
                        state->a = answer & 0xff;
+                       cycles = 4;
                        break;
                    }
         case 0x93:
@@ -623,6 +710,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.cy = ~(answer > 0xff);
                        state->cc.p = Parity(answer & 0xff);
                        state->a = answer & 0xff;
+                       cycles = 4;
                        break;
                    }
         case 0x94:
@@ -633,6 +721,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.cy = ~(answer > 0xff);
                        state->cc.p = Parity(answer & 0xff);
                        state->a = answer & 0xff;
+                       cycles = 4;
                        break;
                    }
         case 0x95:
@@ -643,6 +732,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.cy = ~(answer > 0xff);
                        state->cc.p = Parity(answer & 0xff);
                        state->a = answer & 0xff;
+                       cycles = 4;
                        break;
                    }
         case 0x96:
@@ -654,6 +744,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.cy = ~(answer > 0xff);
                        state->cc.p = Parity(answer & 0xff);
                        state->a = answer & 0xff;
+                       cycles = 7;
                        break;
                    }
         case 0x97:
@@ -664,6 +755,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.cy = ~(answer > 0xff);
                        state->cc.p = Parity(answer & 0xff);
                        state->a = answer & 0xff;
+                       cycles = 4;
                        break;
                    }
                    /*******************   SBB   ********************/
@@ -675,6 +767,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.cy = ~(answer > 0xff);
                        state->cc.p = Parity(answer & 0xff);
                        state->a = answer & 0xff;
+                       cycles = 4;
                        break;
                    }
         case 0x99:
@@ -685,6 +778,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.cy = ~(answer > 0xff);
                        state->cc.p = Parity(answer & 0xff);
                        state->a = answer & 0xff;
+                       cycles = 4;
                        break;
                    }
         case 0x9a:
@@ -695,6 +789,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.cy = ~(answer > 0xff);
                        state->cc.p = Parity(answer & 0xff);
                        state->a = answer & 0xff;
+                       cycles = 4;
                        break;
                    }
         case 0x9b:
@@ -705,6 +800,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.cy = ~(answer > 0xff);
                        state->cc.p = Parity(answer & 0xff);
                        state->a = answer & 0xff;
+                       cycles = 4;
                        break;
                    }
         case 0x9c:
@@ -715,6 +811,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.cy = ~(answer > 0xff);
                        state->cc.p = Parity(answer & 0xff);
                        state->a = answer & 0xff;
+                       cycles = 4;
                        break;
                    }
         case 0x9d:
@@ -725,6 +822,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.cy = ~(answer > 0xff);
                        state->cc.p = Parity(answer & 0xff);
                        state->a = answer & 0xff;
+                       cycles = 4;
                        break;
                    }
         case 0x9e:
@@ -736,6 +834,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.cy = ~(answer > 0xff);
                        state->cc.p = Parity(answer & 0xff);
                        state->a = answer & 0xff;
+                       cycles = 7;
                        break;
                    }
         case 0x9f:
@@ -746,6 +845,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.cy = ~(answer > 0xff);
                        state->cc.p = Parity(answer & 0xff);
                        state->a = answer & 0xff;
+                       cycles = 4;
                        break;
                    }
                    /*******************   ANA   ********************/
@@ -757,6 +857,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.cy = 0;
                        state->cc.p = Parity(answer & 0xff);
                        state->a = answer & 0xff;
+                       cycles = 4;
                        break;
                    }
         case 0xa1:
@@ -767,6 +868,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.cy = 0;
                        state->cc.p = Parity(answer & 0xff);
                        state->a = answer & 0xff;
+                       cycles = 4;
                        break;
                    }
         case 0xa2:
@@ -777,6 +879,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.cy = 0;
                        state->cc.p = Parity(answer & 0xff);
                        state->a = answer & 0xff;
+                       cycles = 4;
                        break;
                    }
         case 0xa3:
@@ -787,6 +890,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.cy = 0;
                        state->cc.p = Parity(answer & 0xff);
                        state->a = answer & 0xff;
+                       cycles = 4;
                        break;
                    }
         case 0xa4:
@@ -797,6 +901,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.cy = 0;
                        state->cc.p = Parity(answer & 0xff);
                        state->a = answer & 0xff;
+                       cycles = 4;
                        break;
                    }
         case 0xa5:
@@ -807,6 +912,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.cy = 0;
                        state->cc.p = Parity(answer & 0xff);
                        state->a = answer & 0xff;
+                       cycles = 4;
                        break;
                    }
         case 0xa6:
@@ -818,6 +924,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.cy = 0;
                        state->cc.p = Parity(answer & 0xff);
                        state->a = answer & 0xff;
+                       cycles = 7;
                        break;
                    }
         case 0xa7:
@@ -828,6 +935,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.cy = 0;
                        state->cc.p = Parity(answer & 0xff);
                        state->a = answer & 0xff;
+                       cycles = 4;
                        break;
                    }
                    /*******************   XRA   ********************/
@@ -839,6 +947,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.cy = 0;
                        state->cc.p = Parity(answer & 0xff);
                        state->a = answer & 0xff;
+                       cycles = 4;
                        break;
                    }
         case 0xa9:
@@ -849,6 +958,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.cy = 0;
                        state->cc.p = Parity(answer & 0xff);
                        state->a = answer & 0xff;
+                       cycles = 4;
                        break;
                    }
         case 0xaa:
@@ -859,6 +969,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.cy = 0;
                        state->cc.p = Parity(answer & 0xff);
                        state->a = answer & 0xff;
+                       cycles = 4;
                        break;
                    }
         case 0xab:
@@ -869,6 +980,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.cy = 0;
                        state->cc.p = Parity(answer & 0xff);
                        state->a = answer & 0xff;
+                       cycles = 4;
                        break;
                    }
         case 0xac:
@@ -879,6 +991,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.cy = 0;
                        state->cc.p = Parity(answer & 0xff);
                        state->a = answer & 0xff;
+                       cycles = 4;
                        break;
                    }
         case 0xad:
@@ -889,6 +1002,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.cy = 0;
                        state->cc.p = Parity(answer & 0xff);
                        state->a = answer & 0xff;
+                       cycles = 4;
                        break;
                    }
         case 0xae:
@@ -900,6 +1014,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.cy = 0;
                        state->cc.p = Parity(answer & 0xff);
                        state->a = answer & 0xff;
+                       cycles = 7;
                        break;
                    }
         case 0xaf:
@@ -910,6 +1025,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.cy = 0;
                        state->cc.p = Parity(answer & 0xff);
                        state->a = answer & 0xff;
+                       cycles = 4;
                        break;
                    }
                    /*******************   ORA   ********************/
@@ -921,6 +1037,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.cy = 0;
                        state->cc.p = Parity(answer & 0xff);
                        state->a = answer & 0xff;
+                       cycles = 4;
                        break;
                    }
         case 0xb1:
@@ -931,6 +1048,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.cy = 0;
                        state->cc.p = Parity(answer & 0xff);
                        state->a = answer & 0xff;
+                       cycles = 4;
                        break;
                    }
         case 0xb2:
@@ -941,6 +1059,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.cy = 0;
                        state->cc.p = Parity(answer & 0xff);
                        state->a = answer & 0xff;
+                       cycles = 4;
                        break;
                    }
         case 0xb3:
@@ -951,6 +1070,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.cy = 0;
                        state->cc.p = Parity(answer & 0xff);
                        state->a = answer & 0xff;
+                       cycles = 4;
                        break;
                    }
         case 0xb4:
@@ -961,6 +1081,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.cy = 0;
                        state->cc.p = Parity(answer & 0xff);
                        state->a = answer & 0xff;
+                       cycles = 4;
                        break;
                    }
         case 0xb5:
@@ -971,6 +1092,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.cy = 0;
                        state->cc.p = Parity(answer & 0xff);
                        state->a = answer & 0xff;
+                       cycles = 4;
                        break;
                    }
         case 0xb6:
@@ -982,6 +1104,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.cy = 0;
                        state->cc.p = Parity(answer & 0xff);
                        state->a = answer & 0xff;
+                       cycles = 7;
                        break;
                    }
         case 0xb7:
@@ -992,6 +1115,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.cy = 0;
                        state->cc.p = Parity(answer & 0xff);
                        state->a = answer & 0xff;
+                       cycles = 4;
                        break;
                    }
                    /*******************   CMP   ********************/
@@ -1002,6 +1126,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.s = ((answer & 0x80) != 0);
                        state->cc.cy = ~(answer > 0xff);
                        state->cc.p = Parity(answer & 0xff);
+                       cycles = 4;
                        break;
                    }
         case 0xb9:
@@ -1011,6 +1136,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.s = ((answer & 0x80) != 0);
                        state->cc.cy = ~(answer > 0xff);
                        state->cc.p = Parity(answer & 0xff);
+                       cycles = 4;
                        break;
                    }
         case 0xba:
@@ -1020,6 +1146,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.s = ((answer & 0x80) != 0);
                        state->cc.cy = ~(answer > 0xff);
                        state->cc.p = Parity(answer & 0xff);
+                       cycles = 4;
                        break;
                    }
         case 0xbb:
@@ -1029,6 +1156,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.s = ((answer & 0x80) != 0);
                        state->cc.cy = ~(answer > 0xff);
                        state->cc.p = Parity(answer & 0xff);
+                       cycles = 4;
                        break;
                    }
         case 0xbc:
@@ -1038,6 +1166,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.s = ((answer & 0x80) != 0);
                        state->cc.cy = ~(answer > 0xff);
                        state->cc.p = Parity(answer & 0xff);
+                       cycles = 4;
                        break;
                    }
         case 0xbd:
@@ -1047,6 +1176,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.s = ((answer & 0x80) != 0);
                        state->cc.cy = ~(answer > 0xff);
                        state->cc.p = Parity(answer & 0xff);
+                       cycles = 4;
                        break;
                    }
         case 0xbe:
@@ -1057,6 +1187,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.s = ((answer & 0x80) != 0);
                        state->cc.cy = ~(answer > 0xff);
                        state->cc.p = Parity(answer & 0xff);
+                       cycles = 7;
                        break;
                    }
         case 0xbf:
@@ -1066,6 +1197,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.s = ((answer & 0x80) != 0);
                        state->cc.cy = ~(answer > 0xff);
                        state->cc.p = Parity(answer & 0xff);
+                       cycles = 4;
                        break;
                    }
         case 0xc1:                          // POP B
@@ -1073,6 +1205,7 @@ void Emulate8080Op(State8080* state)
                        state->c = state->memory[state->sp];
                        state->b = state->memory[state->sp+1];
                        state->sp += 2;
+                       cycles = 10;
                        break;
                    }
         case 0xc2:                          // JNZ adr
@@ -1083,12 +1216,14 @@ void Emulate8080Op(State8080* state)
                        } else {
                            state->pc += 2;
                        }
+                       cycles = 10;
                        break;
                    }
         case 0xc3:                          // JMP adr
                    {
                        state->pc = (opcode[2] << 8) | opcode[1];
                        state->pc = state->pc - 1;
+                       cycles = 10;
                        break;
                    }
         case 0xc5:                          // PUSH B
@@ -1096,6 +1231,7 @@ void Emulate8080Op(State8080* state)
                        state->sp -= 2;
                        state->memory[state->sp] = state->c;
                        state->memory[state->sp+1] = state->b;
+                       cycles = 11;
                        break;
                    }
         case 0xc6:                          // ADI D8
@@ -1107,6 +1243,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.p = Parity(answer & 0xff);
                        state->a = answer & 0xff;
                        state->pc += 1;
+                       cycles = 7;
                        break;
                    }
         case 0xc9:                          // RET
@@ -1114,6 +1251,7 @@ void Emulate8080Op(State8080* state)
                        uint16_t _pc = (state->memory[state->sp] << 8) | state->memory[state->sp+1];
                        state->pc = _pc+2;
                        state->sp += 2;
+                       cycles = 10;
                        break;
                    }
         case 0xca:                          // JZ adr
@@ -1123,6 +1261,7 @@ void Emulate8080Op(State8080* state)
                        } else {
                            state->pc += 2;
                        }
+                       cycles = 10;
                        break;
                    }
         case 0xcd:                          // CALL adr
@@ -1132,6 +1271,7 @@ void Emulate8080Op(State8080* state)
                        state->memory[state->sp-2] = (uint8_t) (state->pc >> 8);
                        state->sp = (uint16_t) (state->sp - 2);
                        state->pc = _pc - 1;
+                       cycles = 17;
                        break;
                    }
         case 0xd1:                          // POP D
@@ -1139,11 +1279,13 @@ void Emulate8080Op(State8080* state)
                        state->e = state->memory[state->sp];
                        state->d = state->memory[state->sp+1];
                        state->sp += 2;
+                       cycles = 10;
                        break;
                    }
         case 0xd3:                          // OUT D8
                    {
                        state->pc += 1;
+                       cycles = 10;
                        break;
                    }
         case 0xd5:                          // PUSH D
@@ -1151,6 +1293,7 @@ void Emulate8080Op(State8080* state)
                        state->sp -= 2;
                        state->memory[state->sp] = state->e;
                        state->memory[state->sp+1] = state->d;
+                       cycles = 11;
                        break;
                    }
         case 0xe1:                          // POP H
@@ -1158,6 +1301,7 @@ void Emulate8080Op(State8080* state)
                        state->l = state->memory[state->sp];
                        state->h = state->memory[state->sp+1];
                        state->sp += 2;
+                       cycles = 10;
                        break;
                    }
         case 0xe5:                          // PUSH H
@@ -1165,6 +1309,7 @@ void Emulate8080Op(State8080* state)
                        state->sp -= 2;
                        state->memory[state->sp] = state->l;
                        state->memory[state->sp+1] = state->h;
+                       cycles = 11;
                        break;
                    }
         case 0xe6:                          // ANI D8
@@ -1176,6 +1321,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.s = ((answer & 0x80) != 0);
                        state->pc += 1;
                        state->a = answer;
+                       cycles = 7;
                        break;
                    }
         case 0xeb:                          // XCHG
@@ -1186,6 +1332,7 @@ void Emulate8080Op(State8080* state)
                        state->d = state->h;
                        state->l = tmp1;
                        state->h = tmp2;
+                       cycles = 4;
                        break;
                    }
         case 0xf1:                          // POP PSW
@@ -1198,6 +1345,7 @@ void Emulate8080Op(State8080* state)
                        state->cc.cy = (answer & 0x01) == 0x01;
                        state->a = state->memory[state->sp+1];
                        state->sp += 2;
+                       cycles = 10;
                        break;
                    }
         case 0xf5:                          // PUSH PSW
@@ -1210,9 +1358,10 @@ void Emulate8080Op(State8080* state)
                        state->memory[state->sp-1] = state->a;
                        state->memory[state->sp-2] = answer;
                        state->sp -= 2;
+                       cycles = 11;
                        break;
                    }
-        case 0xfb: break;                   // EI
+        case 0xfb: cycles = 4; break;                   // EI
         case 0xfe:                          // CPI D8
                    {
                        uint16_t answer = (uint16_t) state->a + ~((uint16_t) state->memory[state->pc+1]) + 1;
@@ -1221,13 +1370,15 @@ void Emulate8080Op(State8080* state)
                        state->cc.cy = (answer > 0xff);
                        state->cc.p = Parity(answer & 0xff);
                        state->pc += 1;
+                       cycles = 7;
                        break;
                    }
 
         default:   UnimplementedInstruction(state); break;
 
     }    
-    state->pc+=1;    
+    state->pc+=1;
+    return cycles;
     /*/ print out processor state 
     printf("\tC=%d,P=%d,S=%d,Z=%d\n", state->cc.cy, state->cc.p,
             state->cc.s, state->cc.z);
@@ -1236,7 +1387,7 @@ void Emulate8080Op(State8080* state)
             state->e, state->h, state->l, state->pc, state->sp);
    */ 
 }
-
+/*
 int _main() {
     printf("IT COMPILED !!!\n");
     // Create a state
@@ -1257,6 +1408,7 @@ int _main() {
 
     return 0;
 }
+*/
 
 
 

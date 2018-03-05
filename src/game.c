@@ -28,8 +28,8 @@ uint8_t int_enable = 0;
 
 // The window
 SDL_Window* gWindow = NULL;
-int SCREEN_WIDTH = 224;
-int SCREEN_HEIGHT = 256;
+int SCREEN_WIDTH = 256;
+int SCREEN_HEIGHT = 224;
 
 // The surface of window
 SDL_Surface* gScreenSurface = NULL;
@@ -168,9 +168,9 @@ int main( int argc, char* args[])
         while (!quit) {
 
             // Draw Surface using Pixels
-            unsigned char* buffer8888 = malloc(224*256);
+            //unsigned char* buffer8888 = malloc(224*256);
 
-            // Fill buffer
+            /*/ Fill buffer
             for (int i = 0; i < 224; i++) {
                 for (int j = 0; j < 256; j+=8) {
                     unsigned char pix = state.memory[0x2400 + i * (256/8) + j / 8];
@@ -179,14 +179,16 @@ int main( int argc, char* args[])
                     //int offset = (255-j)*(224) + (i*4);
                     buffer8888 += pix;
                 }
-            }
+            }*/
 
             //int depth = 8;
             //int pitch = 224;
             
             // Create Surface
             //SDL_Surface* surf = SDL_CreateRGBSurfaceFrom(buffer8888, 224, 256, depth, pitch, 0, 0, 0, 0);
-            SDL_Surface* surf = malloc(4 * 256 * 224);
+            //SDL_Surface* surf = malloc(4 * 256 * 224);
+            SDL_Surface* surf = malloc(300*300);
+            surf->pixels = malloc(256*224);
             surf->pitch = 256;
             surf->w = 256;
             surf->h = 224;
@@ -195,7 +197,7 @@ int main( int argc, char* args[])
             SDL_Color black = {0,0,0,0};
             SDL_Color colors_array[2] = {black, white};
             palette->colors = (SDL_Color *)&colors_array; 
-            SDL_PixelFormat pixel_format = {SDL_PIXELFORMAT_INDEX8, palette, 8, 1, 0, 0, 0, 0};
+            SDL_PixelFormat pixel_format = {SDL_PIXELFORMAT_INDEX1MSB, palette, 8, 1, 0, 0, 0, 0};
             surf->format = &pixel_format; 
 
             //surf->format->BytesPerPixel = 1;
@@ -207,9 +209,9 @@ int main( int argc, char* args[])
                     uint8_t *pix = &state.memory[0x2400 + i * (256/8) + j / 8];
                     uint8_t *p = (uint8_t *) surf->pixels + i * surf->pitch + j* bpp;
 
-                    printf("%02x\n", pix[0]);
+                    //printf("%02x, %02x, %02x\n", pix[0], pix[0], pix[1]);
                     for (int k = 0; k < 8; k++) {
-                        p[k] = 0x0;
+                        p[k] = (pix[0] >> k) & 0x01;
                     }
 
                     // Vertical Flip
@@ -219,6 +221,7 @@ int main( int argc, char* args[])
             }
 
             SDL_BlitSurface(surf, NULL, SDL_GetWindowSurface(gWindow), NULL);
+            printf("Blitted Surface!"); 
             SDL_UpdateWindowSurface(gWindow);
 
             if(surf == NULL) {
@@ -289,10 +292,10 @@ int main( int argc, char* args[])
 
 
             // Apply the image
-            SDL_BlitSurface( gImage, NULL, gScreenSurface, NULL);
+            //SDL_BlitSurface( gImage, NULL, gScreenSurface, NULL);
 
             // Update the surface
-            SDL_UpdateWindowSurface( gWindow );
+            //SDL_UpdateWindowSurface( gWindow );
 
         }
 

@@ -1,9 +1,9 @@
-CFLAGS=-Wall -I./src/include -g -O0
-LIBS=-lcheck
+CFLAGS=-Wall -I./src/include -I /usr/local/Cellar/sdl2/2.0.7/include -g -O0
+LIBS=-lcheck -l SDL2-2.0.0 -L /usr/local/Cellar/sdl2/2.0.7/lib
 
 ODIR=obj
 
-SOURCES=./src/emu_shell.c ./src/main.c
+SOURCES=./src/emu_shell.c ./src/game.c
 OBJECTS=$(SOURCES:.c=.o)
 EXECUTABLE=emulator
 
@@ -26,6 +26,9 @@ test: emulator-test $(TEST_OBJECTS)
 
 emulator-test: $(TEST_OBJECTS)
 	gcc -g -O0 -o $@ $(TEST_OBJECTS) $(FLAGS) $(LIBS) -I./src/include
+
+game:
+	gcc ./src/game.c -o $@ -I /usr/local/Cellar/sdl2/2.0.7/include -L /usr/local/Cellar/sdl2/2.0.7/lib -l SDL2-2.0.0 strip --strip-debug libpthread.so.0
 
 clean:
 	@rm -f *.o emulator* debug 
