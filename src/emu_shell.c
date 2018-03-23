@@ -5,30 +5,6 @@
 
 #include "emu_shell.h"
 
-/* typedef struct ConditionCodes {    
-   uint8_t    z:1;    
-   uint8_t    s:1;    
-   uint8_t    p:1;    
-   uint8_t    cy:1;    
-   uint8_t    ac:1;    
-   uint8_t    pad:3;    
-   } ConditionCodes;
-
-   typedef struct State8080 {    
-   uint8_t    a;    
-   uint8_t    b;    
-   uint8_t    c;    
-   uint8_t    d;    
-   uint8_t    e;    
-   uint8_t    h;    
-   uint8_t    l;    
-   uint16_t    sp;    
-   uint16_t    pc;    
-   uint8_t     *memory;    
-   struct      ConditionCodes      cc;    
-   uint8_t     int_enable;    
-   } State8080; */
-
 uint8_t Parity(uint8_t num) {
     uint8_t ret = 0;
     for (uint8_t i = 0; i < 8; i++) {
@@ -41,11 +17,11 @@ uint8_t Parity(uint8_t num) {
     }
 }
 
-void UnimplementedInstruction(State8080* state)    
-{    
-    //pc will have advanced one, so undo that    
-    printf ("Error: Unimplemented instruction %02x, %02x, %02x\n", state->memory[state->pc], state->memory[state->pc+1], state->memory[state->pc+2]);    
-    exit(1);    
+void UnimplementedInstruction(State8080* state)
+{
+    //pc will have advanced one, so undo that
+    printf ("Error: Unimplemented instruction %02x, %02x, %02x\n", state->memory[state->pc], state->memory[state->pc+1], state->memory[state->pc+2]);
+    exit(1);
 }
 
 char numCycles(State8080* state) {
@@ -309,7 +285,7 @@ char numCycles(State8080* state) {
             cycles = 18;
             break;
     }
-    
+
     return cycles;
 
     if (opcode == 0xdc) {
@@ -336,7 +312,7 @@ char numCycles(State8080* state) {
             return 11;
         }
     }
-    
+
     if (opcode == 0xc4) {
         if (state->cc.z == 0) {
             return 17;
@@ -443,20 +419,20 @@ char numCycles(State8080* state) {
 }
 
 
-char Emulate8080Op(State8080* state)    
-{   
+char Emulate8080Op(State8080* state)
+{
     char cycles = 0;
     unsigned char *opcode = &state->memory[state->pc];
 
-    switch(*opcode)    
-    {    
-        case 0x00: cycles = 4; break;                   //NOP is easy!    
-        case 0x01:                          //LXI   B,word    
-                   state->c = state->memory[state->pc+1];    
-                   state->b = state->memory[state->pc+2];    
-                   state->pc += 2;                  //advance 2 more bytes    
+    switch(*opcode)
+    {
+        case 0x00: cycles = 4; break;                   //NOP is easy!
+        case 0x01:                          //LXI   B,word
+                   state->c = state->memory[state->pc+1];
+                   state->b = state->memory[state->pc+2];
+                   state->pc += 2;                  //advance 2 more bytes
                    cycles = 10;
-                   break;    
+                   break;
         case 0x02:                          // STAX B
                    {
                        uint16_t offset = ((uint16_t) state->b << 8) + (uint16_t) state->c;
@@ -559,12 +535,12 @@ char Emulate8080Op(State8080* state)
                    cycles = 4;
                    break;
         case 0x10: cycles = 4; break;
-        case 0x11:                          //LXI   D,word    
-                   state->e = opcode[1];    
-                   state->d = opcode[2];    
-                   state->pc += 2;                  //advance 2 more bytes    
+        case 0x11:                          //LXI   D,word
+                   state->e = opcode[1];
+                   state->d = opcode[2];
+                   state->pc += 2;                  //advance 2 more bytes
                    cycles = 10;
-                   break;    
+                   break;
         case 0x12:                          // STAX D
                    {
                        uint16_t offset = ((uint16_t) state->d << 8) + (uint16_t) state->e;
@@ -659,12 +635,12 @@ char Emulate8080Op(State8080* state)
                    state->pc += 1;
                    cycles = 7;
                    break;
-        case 0x21:                          //LXI   H,word    
-                   state->l = opcode[1];    
-                   state->h = opcode[2];    
-                   state->pc += 2;                  //advance 2 more bytes    
+        case 0x21:                          //LXI   H,word
+                   state->l = opcode[1];
+                   state->h = opcode[2];
+                   state->pc += 2;                  //advance 2 more bytes
                    cycles = 10;
-                   break;    
+                   break;
         case 0x23:                          // INX H
                    {
                        uint16_t answer = ((uint16_t) state->h << 8) + (uint16_t) state->l + 1;
@@ -742,11 +718,11 @@ char Emulate8080Op(State8080* state)
                    state->pc += 1;
                    cycles = 7;
                    break;
-        case 0x31:                          //LXI   SP,word (D16)   
-                   state->sp = ((uint16_t) opcode[2] << 8) | opcode[1];    
-                   state->pc += 2;                  //advance 2 more bytes    
+        case 0x31:                          //LXI   SP,word (D16)
+                   state->sp = ((uint16_t) opcode[2] << 8) | opcode[1];
+                   state->pc += 2;                  //advance 2 more bytes
                    cycles = 10;
-                   break;    
+                   break;
         case 0x32:                          // STA adr
                    {
                        uint16_t addr = ((uint16_t) opcode[2] << 8) | opcode[1];
@@ -762,7 +738,7 @@ char Emulate8080Op(State8080* state)
         case 0x34:                          // INR M
                    {
                        uint16_t offset = ((uint16_t) state->h << 8) | (state->l);
-                       uint16_t answer = state->memory[offset] + 1; 
+                       uint16_t answer = state->memory[offset] + 1;
                        state->memory[offset] = answer;
                        state->cc.z = (answer == 0);
                        state->cc.s = ((answer & 0x80) != 0);
@@ -831,8 +807,8 @@ char Emulate8080Op(State8080* state)
                    state->pc += 1;
                    cycles = 7;
                    break;
-        case 0x41: state->b = state->c; cycles = 5; break;    //MOV B,C    
-        case 0x42: state->b = state->d; cycles = 5; break;    //MOV B,D    
+        case 0x41: state->b = state->c; cycles = 5; break;    //MOV B,C
+        case 0x42: state->b = state->d; cycles = 5; break;    //MOV B,D
         case 0x43: state->b = state->e; cycles = 5; break;    //MOV B,E
         case 0x46:                          // MOV B,M
                    {
@@ -1137,7 +1113,7 @@ char Emulate8080Op(State8080* state)
                    }
         case 0x96:
                    {
-                       uint16_t offset = (state->h<<8) | (state->l); 
+                       uint16_t offset = (state->h<<8) | (state->l);
                        uint16_t answer = (uint16_t) state->a + ~(state->memory[offset]) + 1;
                        state->cc.z = ((answer & 0xff) == 0);
                        state->cc.s = ((answer & 0x80) != 0);
@@ -1227,7 +1203,7 @@ char Emulate8080Op(State8080* state)
                    }
         case 0x9e:
                    {
-                       uint16_t offset = (state->h<<8) | (state->l); 
+                       uint16_t offset = (state->h<<8) | (state->l);
                        uint16_t answer = (uint16_t) state->a + (uint16_t) state->cc.cy + ~(state->memory[offset]) + 1;
                        state->cc.z = ((answer & 0xff) == 0);
                        state->cc.s = ((answer & 0x80) != 0);
@@ -1317,7 +1293,7 @@ char Emulate8080Op(State8080* state)
                    }
         case 0xa6:
                    {
-                       uint16_t offset = (state->h<<8) | (state->l); 
+                       uint16_t offset = (state->h<<8) | (state->l);
                        uint16_t answer = ((uint16_t) state->a) & (state->memory[offset]);
                        state->cc.z = ((answer & 0xff) == 0);
                        state->cc.s = ((answer & 0x80) != 0);
@@ -1407,7 +1383,7 @@ char Emulate8080Op(State8080* state)
                    }
         case 0xae:
                    {
-                       uint16_t offset = (state->h<<8) | (state->l); 
+                       uint16_t offset = (state->h<<8) | (state->l);
                        uint16_t answer = ((uint16_t) state->a) ^ (state->memory[offset]);
                        state->cc.z = ((answer & 0xff) == 0);
                        state->cc.s = ((answer & 0x80) != 0);
@@ -1497,7 +1473,7 @@ char Emulate8080Op(State8080* state)
                    }
         case 0xb6:
                    {
-                       uint16_t offset = (state->h<<8) | (state->l); 
+                       uint16_t offset = (state->h<<8) | (state->l);
                        uint16_t answer = ((uint16_t) state->a) | (state->memory[offset]);
                        state->cc.z = ((answer & 0xff) == 0);
                        state->cc.s = ((answer & 0x80) != 0);
@@ -1581,7 +1557,7 @@ char Emulate8080Op(State8080* state)
                    }
         case 0xbe:
                    {
-                       uint16_t offset = (state->h<<8) | (state->l); 
+                       uint16_t offset = (state->h<<8) | (state->l);
                        uint16_t answer = ((uint16_t) state->a) + ~(state->memory[offset]) + 1;
                        state->cc.z = ((answer & 0xff) == 0);
                        state->cc.s = ((answer & 0x80) != 0);
@@ -1848,41 +1824,7 @@ char Emulate8080Op(State8080* state)
 
         default:   UnimplementedInstruction(state); break;
 
-    }    
+    }
     state->pc+=1;
     return cycles;
-    // print out processor state 
-    /*printf("\tC=%d,P=%d,S=%d,Z=%d\n", state->cc.cy, state->cc.p,
-            state->cc.s, state->cc.z);
-    printf("\tA $%02x B $%02x C $%02x D $%02x E $%02x H $%02x L $%02x PC %04x SP %04x\n",
-            state->a, state->b, state->c, state->d,
-            state->e, state->h, state->l, state->pc, state->sp);
-    */
 }
-/*
-int _main() {
-    printf("IT COMPILED !!!\n");
-    // Create a state
-    State8080 state;
-
-    // Load argument into memory
-    FILE *fileptr = fopen("../res/invaders","rb");
-    fseek(fileptr, 0, SEEK_END);
-    long filelen = ftell(fileptr);
-    rewind(fileptr);
-
-    char *buffer = (char *)malloc((filelen+1)*sizeof(char)); 
-    fread(buffer, filelen, 1, fileptr);
-    state.memory = (uint8_t *) buffer;
-    // Call Emulate
-    // Repeat emulator
-    Emulate8080Op(&state);
-
-    return 0;
-}
-*/
-
-
-
-
-
