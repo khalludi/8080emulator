@@ -2,6 +2,10 @@
 invaders*
 emulator*
 debug
+*.bmp
+dis_invaders
+op_test
+time
 
 # Prerequisites
 *.d
