@@ -301,7 +301,7 @@ int Disassemble8080Op(unsigned char *codebuffer, int pc)
         case 0xff: printf("RST    7"); break;
     }    
 
-    printf("\n");    
+    printf("\t%02x%02x%02x\n", code[0], code[1], code[2]);    
 
     return opbytes;    
 }

@@ -12,7 +12,7 @@ typedef struct ConditionCodes {
 } ConditionCodes;
 
 typedef struct State8080 {    
-    uint8_t    a;    
+    uint16_t    a;    
     uint8_t    b;    
     uint8_t    c;    
     uint8_t    d;    

@@ -47,20 +47,401 @@ void UnimplementedInstruction(State8080* state)
     printf ("Error: Unimplemented instruction %02x, %02x, %02x\n", state->memory[state->pc], state->memory[state->pc+1], state->memory[state->pc+2]);    
     exit(1);    
 }
-/*
+
 char numCycles(State8080* state) {
     char cycles = 0;
-    unsigned char *opcode = &state->memory[state->pc];
+    unsigned char opcode = state->memory[state->pc];
 
-    switch(*opcode) {
+    switch(opcode) {
         case 0x00:
         case 0x08:
+        case 0x10:
+        case 0x18:
+        case 0x28:
+        case 0x38:
+        case 0xcb:
+        case 0xd9:
+        case 0xdd:
+        case 0xed:
+        case 0xfd:
+        case 0x80:
+        case 0x81:
+        case 0x82:
+        case 0x83:
+        case 0x84:
+        case 0x85:
+        case 0x87:
+        case 0x88:
+        case 0x89:
+        case 0x8a:
+        case 0x8b:
+        case 0x8c:
+        case 0x8d:
+        case 0x8f:
+        case 0x90:
+        case 0x91:
+        case 0x92:
+        case 0x93:
+        case 0x94:
+        case 0x95:
+        case 0x97:
+        case 0x98:
+        case 0x99:
+        case 0x9a:
+        case 0x9b:
+        case 0x9c:
+        case 0x9d:
+        case 0x9f:
+        case 0xa0:
+        case 0xa1:
+        case 0xa2:
+        case 0xa3:
+        case 0xa4:
+        case 0xa5:
+        case 0xa7:
+        case 0xa8:
+        case 0xa9:
+        case 0xaa:
+        case 0xab:
+        case 0xac:
+        case 0xad:
+        case 0xaf:
+        case 0xb0:
+        case 0xb1:
+        case 0xb2:
+        case 0xb3:
+        case 0xb4:
+        case 0xb5:
+        case 0xb7:
+        case 0xb8:
+        case 0xb9:
+        case 0xba:
+        case 0xbb:
+        case 0xbc:
+        case 0xbd:
+        case 0xbf:
+        case 0x07:
+        case 0x0f:
+        case 0x17:
+        case 0x1f:
+        case 0x27:
+        case 0x2f:
+        case 0x37:
+        case 0x3f:
+        case 0xf3:
+        case 0xfb:
             cycles = 4;
             break;
+        case 0xe9:
+        case 0xf9:
+        case 0x03:          // INX
+        case 0x13:
+        case 0x23:
+        case 0x33:
+        case 0x40:          // MOV
+        case 0x41:
+        case 0x42:
+        case 0x43:
+        case 0x44:
+        case 0x45:
+        case 0x47:
+        case 0x48:
+        case 0x49:
+        case 0x4a:
+        case 0x4b:
+        case 0x4c:
+        case 0x4d:
+        case 0x4f:
+        case 0x50:
+        case 0x51:
+        case 0x52:
+        case 0x53:
+        case 0x54:
+        case 0x55:
+        case 0x57:
+        case 0x58:
+        case 0x59:
+        case 0x5a:
+        case 0x5b:
+        case 0x5c:
+        case 0x5d:
+        case 0x5f:
+        case 0x60:
+        case 0x61:
+        case 0x62:
+        case 0x63:
+        case 0x64:
+        case 0x65:
+        case 0x67:
+        case 0x68:
+        case 0x69:
+        case 0x6a:
+        case 0x6b:
+        case 0x6c:
+        case 0x6d:
+        case 0x6f:
+        case 0x78:
+        case 0x79:
+        case 0x7a:
+        case 0x7b:
+        case 0x7c:
+        case 0x7d:
+        case 0x7f:
+        case 0x04:          // INR
+        case 0x0c:
+        case 0x14:
+        case 0x1c:
+        case 0x24:
+        case 0x2c:
+        case 0x3c:
+        case 0x05:          // DCR
+        case 0x0d:
+        case 0x15:
+        case 0x1d:
+        case 0x25:
+        case 0x2d:
+        case 0x3d:
+        case 0x0b:          // DCX
+        case 0x1b:
+        case 0x2b:
+        case 0x3b:
+            cycles = 5;
+            break;
+        case 0x02:          // STAX
+        case 0x12:
+        case 0x0a:          // LDAX
+        case 0x1a:
+        case 0x46:          // MOV M
+        case 0x4e:
+        case 0x56:
+        case 0x5e:
+        case 0x66:
+        case 0x6e:
+        case 0x70:
+        case 0x71:
+        case 0x72:
+        case 0x73:
+        case 0x74:
+        case 0x75:
+        case 0x77:
+        case 0x7e:
+        case 0x76:          // HLT
+        case 0x06:          // MVI
+        case 0x0e:
+        case 0x16:
+        case 0x1e:
+        case 0x26:
+        case 0x2e:
+        case 0x3e:
+        case 0x86:          // ADD - CMP M
+        case 0x8e:
+        case 0x96:
+        case 0x9e:
+        case 0xa6:
+        case 0xae:
+        case 0xb6:
+        case 0xbe:
+        case 0xc6:          // ADI
+        case 0xce:          // ACI
+        case 0xd6:          // SUI
+        case 0xde:          // SBB
+        case 0xe6:          // ANI
+        case 0xee:          // XRI
+        case 0xf6:          // ORI
+        case 0xfe:          // CPI
+            cycles = 7;
+            break;
+        case 0xc9:          // RET
+        case 0xdb:          // IN
+        case 0xd3:          // OUT
+        case 0x01:          // LXI
+        case 0x11:
+        case 0x21:
+        case 0x31:
+        case 0xc1:          // POP
+        case 0xd1:
+        case 0xe1:
+        case 0xf1:
+        case 0x09:          // DAD
+        case 0x19:
+        case 0x29:
+        case 0x39:
+        case 0x36:          // MVI M
+        case 0x34:          // INR/DCR M
+        case 0x35:
+        case 0xc2:          // JMP's
+        case 0xc3:
+        case 0xca:
+        case 0xd2:
+        case 0xda:
+        case 0xe2:
+        case 0xea:
+        case 0xf2:
+        case 0xfa:
+            cycles = 10;
+            break;
+        case 0xc7:          // RST
+        case 0xcf:
+        case 0xd7:
+        case 0xdf:
+        case 0xe7:
+        case 0xef:
+        case 0xf7:
+        case 0xff:
+        case 0xc5:          // PUSH
+        case 0xd5:
+        case 0xe5:
+        case 0xf5:
+            cycles = 11;
+            break;
+        case 0x32:          // STA
+        case 0x3a:          // LDA
+            cycles = 13;
+            break;
+        case 0x22:          // SHLD
+        case 0x2a:          // LHLD
+            cycles = 16;
+            break;
+        case 0xcd:          // CALL
+            cycles = 17;
+            break;
+        case 0xe3:          // XTHL
+            cycles = 18;
+            break;
     }
+    
     return cycles;
+
+    if (opcode == 0xdc) {
+        if (state->cc.cy == 1) {
+            return 17;
+        } else {
+            return 11;
+        }
+    }
+
+
+    if (opcode == 0xd4) {
+        if (state->cc.cy == 0) {
+            return 17;
+        } else {
+            return 11;
+        }
+    }
+
+    if (opcode == 0xcc) {
+        if (state->cc.z == 1) {
+            return 17;
+        } else {
+            return 11;
+        }
+    }
+    
+    if (opcode == 0xc4) {
+        if (state->cc.z == 0) {
+            return 17;
+        } else {
+            return 11;
+        }
+    }
+
+    if (opcode == 0xf4) {
+        if (state->cc.p == 0) {
+            return 17;
+        } else {
+            return 11;
+        }
+    }
+
+    if (opcode == 0xfc) {
+        if (state->cc.s == 1) {
+            return 17;
+        } else {
+            return 11;
+        }
+    }
+
+    if (opcode == 0xec) {
+        if (state->cc.p == 1) {
+            return 17;
+        } else {
+            return 11;
+        }
+    }
+
+    if (opcode == 0xe4) {
+        if (state->cc.p == 0) {
+            return 17;
+        } else {
+            return 11;
+        }
+    }
+
+    if (opcode == 0xd8) {
+        if (state->cc.cy == 1) {
+            return 11;
+        } else {
+            return 5;
+        }
+    }
+
+    if (opcode == 0xd0) {
+        if (state->cc.cy == 0) {
+            return 11;
+        } else {
+            return 5;
+        }
+    }
+
+    if (opcode == 0xc8) {
+        if (state->cc.z == 1) {
+            return 11;
+        } else {
+            return 5;
+        }
+    }
+
+    if (opcode == 0xc0) {
+        if (state->cc.z == 0) {
+            return 11;
+        } else {
+            return 5;
+        }
+    }
+
+    if (opcode == 0xf0) {
+        if (state->cc.s == 0) {
+            return 11;
+        } else {
+            return 5;
+        }
+    }
+
+    if (opcode == 0xf8) {
+        if (state->cc.s == 1) {
+            return 11;
+        } else {
+            return 5;
+        }
+    }
+
+    if (opcode == 0xe8) {
+        if (state->cc.p == 1) {
+            return 11;
+        } else {
+            return 5;
+        }
+    }
+
+    if (opcode == 0xe0) {
+        if (state->cc.p == 0) {
+            return 11;
+        } else {
+            return 5;
+        }
+    }
 }
-*/
+
 
 char Emulate8080Op(State8080* state)    
 {   
@@ -408,6 +789,11 @@ char Emulate8080Op(State8080* state)
                        cycles = 10;
                        break;
                    }
+        case 0x37:                          // STC
+                   {
+                       state->cc.cy = 1;
+                       break;
+                   }
         case 0x3a:                          // LDA adr
                    {
                        uint16_t addr = ((uint16_t) opcode[2] << 8) | opcode[1];
@@ -447,7 +833,15 @@ char Emulate8080Op(State8080* state)
                    break;
         case 0x41: state->b = state->c; cycles = 5; break;    //MOV B,C    
         case 0x42: state->b = state->d; cycles = 5; break;    //MOV B,D    
-        case 0x43: state->b = state->e; cycles = 5; break;    //MOV B,E    
+        case 0x43: state->b = state->e; cycles = 5; break;    //MOV B,E
+        case 0x46:                          // MOV B,M
+                   {
+                       uint16_t offset = ((uint16_t) state->h << 8) | state->l;
+                       state->b = state->memory[offset];
+                       cycles = 7;
+                       break;
+                   }
+        case 0x4f: state->c = state->a; cycles = 5; break;
         case 0x56:                          // MOV D,M
                    {
                        uint16_t offset = ((uint16_t) state->h << 8) | state->l;
@@ -455,6 +849,7 @@ char Emulate8080Op(State8080* state)
                        cycles = 7;
                        break;
                    }
+        case 0x57: state->d = state->a; cycles = 5; break;
         case 0x5e:                          // MOV E,M
                    {
                        uint16_t offset = ((uint16_t) state->h << 8) | state->l;
@@ -462,6 +857,7 @@ char Emulate8080Op(State8080* state)
                        cycles = 7;
                        break;
                    }
+        case 0x5f: state->e = state->a; cycles = 5; break;
         case 0x66:                          // MOV H,M
                    {
                        uint16_t offset = ((uint16_t) state->h << 8) | state->l;
@@ -469,6 +865,7 @@ char Emulate8080Op(State8080* state)
                        cycles = 7;
                        break;
                    }
+        case 0x67: state->h = state->a; cycles = 5; break;
         case 0x6f: state->l = state->a; cycles = 5; break;      // MOV L,A
         case 0x77:                          // MOV M,A
                    {
@@ -477,9 +874,12 @@ char Emulate8080Op(State8080* state)
                        cycles = 7;
                        break;
                    }
+        case 0x78: state->a = state->b; cycles = 5; break;
+        case 0x79: state->a = state->c; cycles = 5; break;
         case 0x7a: state->a = state->d; cycles = 5; break;      // MOV A,D
         case 0x7b: state->a = state->e; cycles = 5; break;      // MOV A,E
         case 0x7c: state->a = state->h; cycles = 5; break;      // MOV A,H
+        case 0x7d: state->a = state->l; cycles = 5; break;
         case 0x7e:                          // MOV A,M
                    {
                        uint16_t offset = ((uint16_t) state->h << 8) | state->l;
@@ -1200,6 +1600,18 @@ char Emulate8080Op(State8080* state)
                        cycles = 4;
                        break;
                    }
+        case 0xc0:                          // RNZ
+                   {
+                       if (state->cc.z == 0) {
+                           uint16_t _pc = (state->memory[state->sp] << 8) | state->memory[state->sp+1];
+                           state->pc = _pc+2;
+                           state->sp += 2;
+                           cycles = 11;
+                       } else {
+                           cycles = 5;
+                       }
+                       break;
+                   }
         case 0xc1:                          // POP B
                    {
                        state->c = state->memory[state->sp];
@@ -1246,6 +1658,18 @@ char Emulate8080Op(State8080* state)
                        cycles = 7;
                        break;
                    }
+        case 0xc8:                          // RZ
+                   {
+                       if (state->cc.z == 1) {
+                           uint16_t _pc = (state->memory[state->sp] << 8) | state->memory[state->sp+1];
+                           state->pc = _pc+2;
+                           state->sp += 2;
+                           cycles = 11;
+                       } else {
+                           cycles = 5;
+                       }
+                       break;
+                   }
         case 0xc9:                          // RET
                    {
                        uint16_t _pc = (state->memory[state->sp] << 8) | state->memory[state->sp+1];
@@ -1258,6 +1682,7 @@ char Emulate8080Op(State8080* state)
                    {
                        if (state->cc.z == 1) {
                            state->pc = (opcode[2] << 8) | opcode[1];
+                           state->pc -= 1;
                        } else {
                            state->pc += 2;
                        }
@@ -1272,6 +1697,18 @@ char Emulate8080Op(State8080* state)
                        state->sp = (uint16_t) (state->sp - 2);
                        state->pc = _pc - 1;
                        cycles = 17;
+                       break;
+                   }
+        case 0xd0:                          // RNC
+                   {
+                       if (state->cc.cy == 0) {
+                           uint16_t _pc = (state->memory[state->sp] << 8) | state->memory[state->sp+1];
+                           state->pc = _pc+2;
+                           state->sp += 2;
+                           cycles = 11;
+                       } else {
+                           cycles = 5;
+                       }
                        break;
                    }
         case 0xd1:                          // POP D
@@ -1294,6 +1731,41 @@ char Emulate8080Op(State8080* state)
                        state->memory[state->sp] = state->e;
                        state->memory[state->sp+1] = state->d;
                        cycles = 11;
+                       break;
+                   }
+        case 0xd6:                          // SUI D8
+                   {
+                       uint8_t answer = state->a + ~(state->memory[state->pc+1]) + 1;
+                       state->a = answer;
+                       state->cc.z = (answer == 0);
+                       state->cc.s = ((answer & 0x80) != 0);
+                       state->cc.p = Parity(answer);
+                       state->pc += 1;
+                       cycles = 7;
+                       break;
+                   }
+        case 0xd8:                          // RC
+                   {
+                       if (state->cc.cy == 1) {
+                           uint16_t _pc = (state->memory[state->sp] << 8) | state->memory[state->sp+1];
+                           state->pc = _pc+2;
+                           state->sp += 2;
+                           cycles = 11;
+                       } else {
+                           cycles = 5;
+                       }
+                       break;
+                   }
+        case 0xda:                          // JC adr
+                   {
+                       if (state->cc.cy == 1) {
+                           state->pc = (opcode[2] << 8) | opcode[1];
+                           state->pc -= 1;
+                           cycles = 11;
+                       } else {
+                           state->pc += 2;
+                           cycles = 5;
+                       }
                        break;
                    }
         case 0xe1:                          // POP H
@@ -1361,7 +1833,7 @@ char Emulate8080Op(State8080* state)
                        cycles = 11;
                        break;
                    }
-        case 0xfb: cycles = 4; break;                   // EI
+        case 0xfb: state->int_enable = 1; cycles = 4; break; // EI
         case 0xfe:                          // CPI D8
                    {
                        uint16_t answer = (uint16_t) state->a + ~((uint16_t) state->memory[state->pc+1]) + 1;
@@ -1379,13 +1851,13 @@ char Emulate8080Op(State8080* state)
     }    
     state->pc+=1;
     return cycles;
-    /*/ print out processor state 
-    printf("\tC=%d,P=%d,S=%d,Z=%d\n", state->cc.cy, state->cc.p,
+    // print out processor state 
+    /*printf("\tC=%d,P=%d,S=%d,Z=%d\n", state->cc.cy, state->cc.p,
             state->cc.s, state->cc.z);
     printf("\tA $%02x B $%02x C $%02x D $%02x E $%02x H $%02x L $%02x PC %04x SP %04x\n",
             state->a, state->b, state->c, state->d,
             state->e, state->h, state->l, state->pc, state->sp);
-   */ 
+    */
 }
 /*
 int _main() {

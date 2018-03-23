@@ -5,6 +5,7 @@
 #include <sys/time.h>
 #include <SDL2/SDL_pixels.h>
 #include <SDL2/SDL.h>
+#include <unistd.h>
 #include "emu_shell.h"
 
 // Start SDL and create window
@@ -25,11 +26,12 @@ uint8_t shift0 = 0;
 uint8_t shift1 = 0;
 uint8_t shift_offset = 0;
 uint8_t int_enable = 0;
+long len_of_file = 0;
 
 // The window
 SDL_Window* gWindow = NULL;
-int SCREEN_WIDTH = 256;
-int SCREEN_HEIGHT = 224;
+int SCREEN_WIDTH = 224;
+int SCREEN_HEIGHT = 256;
 
 // The surface of window
 SDL_Surface* gScreenSurface = NULL;
@@ -66,11 +68,14 @@ bool init() {
     long filelen = ftell(fileptr);
     rewind(fileptr);
 
-    char *buffer = (char *)malloc((filelen+1)*sizeof(char));
+    //char *buffer = (char *)malloc((filelen+1)*sizeof(char));
+    char* buffer = (char *) malloc(64001);
+    len_of_file = 64001;
     fread(buffer, filelen, 1, fileptr);
     state.sp = 0xf000;
     state.memory = (uint8_t *) buffer;
 
+    state.int_enable = 1;
     state.sp = 0xf000;
     state.cc.cy = 0;
 
@@ -82,12 +87,12 @@ bool loadMedia() {
     bool success = true;
 
     /*/ Load splash image
-    gImage = SDL_LoadBMP("bmw.bmp");
-    if (gImage == NULL) {
-        printf("Unable to load image bmw.bmp! SDL Error: %s\n", SDL_GetError());
-        success = false;
-    }
-    */
+      gImage = SDL_LoadBMP("bmw.bmp");
+      if (gImage == NULL) {
+      printf("Unable to load image bmw.bmp! SDL Error: %s\n", SDL_GetError());
+      success = false;
+      }
+      */
     return success;
 }
 
@@ -105,20 +110,20 @@ void closeMedia() {
 }
 
 uint8_t MachineIN(uint8_t port) {
-    uint8_t a;
+    uint8_t a = 0x00;
     switch(port) {
         case 0:
-            return 1;
+            return 0x01;
             break;
         case 1:
-            return 0;
+            return 0x00;
             break;
 
         case 3: {
-            uint16_t v = (shift1 << 8) | shift0;
-            a = ((v >> (8 - shift_offset)) & 0xff);
-            break;
-        }
+                    uint16_t v = (shift1 << 8) | shift0;
+                    a = ((v >> (8 - shift_offset)) & 0xff);
+                    break;
+                }
     }
     return a;
 }
@@ -139,11 +144,80 @@ void MachineOUT(uint8_t port, uint8_t value) {
 double getMicrotime() {
     struct timeval cTime;
     gettimeofday(&cTime, NULL);
-    return cTime.tv_sec + cTime.tv_usec;
+    return cTime.tv_sec + cTime.tv_usec*0.000001;
+}
+
+void draw() {
+
+    void* pixels = malloc(256*224);
+
+    //int bpp = 1;
+
+    for (int i = 0; i < 224; i++) {
+        for (int j = 0; j < 256; j+=8) {
+            long x = 0x2400 + i * (256/8) + j / 8;
+            if ( x >= len_of_file) {
+                // write error to printf stderr
+                printf("%lu, %lu, %d, %d\n", x, len_of_file, i, j);
+                // exit
+                exit(0);
+            }
+
+            uint8_t *pix = &state.memory[x];
+            //uint8_t *p = (uint8_t *) surf->pixels + i * surf->pitch + j* bpp;
+            //uint8_t *p = (uint8_t *) pixels + (255-j) * 224 + i;
+
+            //printf("%02x, %02x, %02x\n", pix[0], pix[0], pix[1]);
+            for (int k = 0; k < 8; k++) {
+                uint8_t *p = (uint8_t *) pixels + (255-j-k) * 224 + i-k;
+                p[k] = (pix[0] >> k) & 0x01;
+                if (p[k] == 1) {
+                    p[k] = 0x01;
+                }
+            }
+        }
+    }
+
+    // Save Memory in File
+    //fwrite(&state.memory[2400], 1, 256*224, fp);
+    /*uint8_t *pix = pixels;
+      for (int a = 0; a < 256*224; a++) {
+      printf("%x, ", pix[a]);
+      }
+      printf("\n\n\n\n");
+      */
+
+    SDL_Surface* surf = SDL_CreateRGBSurfaceFrom(pixels, 224, 256, 4, 224, 0x60, 0x18, 0x06, 0x80);
+
+    //SDL_LockSurface(surf);
+
+    SDL_Palette* palette = SDL_AllocPalette(2);
+    SDL_Color white = {255,255,255,0};
+    SDL_Color black = {0,0,0,0};
+    SDL_Color colors_array[2] = {black, white};
+    palette->colors = (SDL_Color *)&colors_array;
+    SDL_PixelFormat pixel_format = {SDL_PIXELFORMAT_INDEX1LSB, palette, 8, 1, {0, 0}, 0x60, 0x18, 0x04, 0x0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL};
+    surf->format = &pixel_format;
+
+    //printf("Surface Created!");
+    SDL_BlitSurface(surf, NULL, SDL_GetWindowSurface(gWindow), NULL);
+    SDL_UpdateWindowSurface(gWindow);
+}
+
+void GenerateInterrupt(int interrupt) {
+   // Push
+   state.sp -= 2;
+   state.memory[state.sp] = state.pc & 0xff;
+   state.memory[state.sp+1] = (state.pc & 0xff00) >> 8;
+
+   state.pc = 8 * interrupt;
+   state.int_enable = 0;
 }
 
 int main( int argc, char* args[])
 {
+    //printf("Start Main!");
+
     // Start up SDL and create window
     if ( !init() ) {
         printf("Failed to initialize!\n");
@@ -154,15 +228,16 @@ int main( int argc, char* args[])
         // Event handler
         // SDL_Event e;
 
-/*        State8080 *state;
-        uint8_t shift0 = 0;
-        uint8_t shift1 = 0;
-        uint8_t shift_offset = 0;
-*/
+        /*        State8080 *state;
+                  uint8_t shift0 = 0;
+                  uint8_t shift1 = 0;
+                  uint8_t shift_offset = 0;
+                  */
         double lastTime = 0;
+        double leftover_cycles = 0;
         double nextInterrupt;
         int whichInterrupt;
-        int cnt = 0;
+        long cnt = 0;
 
         // While application is running
         while (!quit) {
@@ -171,93 +246,140 @@ int main( int argc, char* args[])
             //unsigned char* buffer8888 = malloc(224*256);
 
             /*/ Fill buffer
-            for (int i = 0; i < 224; i++) {
-                for (int j = 0; j < 256; j+=8) {
-                    unsigned char pix = state.memory[0x2400 + i * (256/8) + j / 8];
-                    
-                    // Vertical Flip
-                    //int offset = (255-j)*(224) + (i*4);
-                    buffer8888 += pix;
-                }
+              for (int i = 0; i < 224; i++) {
+              for (int j = 0; j < 256; j+=8) {
+              unsigned char pix = state.memory[0x2400 + i * (256/8) + j / 8];
+
+            // Vertical Flip
+            //int offset = (255-j)*(224) + (i*4);
+            buffer8888 += pix;
+            }
             }*/
 
             //int depth = 8;
             //int pitch = 224;
-            
+
             // Create Surface
             //SDL_Surface* surf = SDL_CreateRGBSurfaceFrom(buffer8888, 224, 256, depth, pitch, 0, 0, 0, 0);
             //SDL_Surface* surf = malloc(4 * 256 * 224);
-            SDL_Surface* surf = malloc(300*300);
-            surf->pixels = malloc(256*224);
-            surf->pitch = 256;
-            surf->w = 256;
-            surf->h = 224;
+            //printf("Surface Extension");
+
+            // Manual Create Surface - didn't work
+            /*SDL_Surface* surf = malloc(300*300);
+              surf->pixels = malloc(256*224);
+              surf->pitch = 224;
+              surf->w = 224;
+              surf->h = 256;
+              SDL_Palette* palette = SDL_AllocPalette(2);
+              SDL_Color white = {255,255,255,0};
+              SDL_Color black = {0,0,0,0};
+              SDL_Color colors_array[2] = {black, white};
+              palette->colors = (SDL_Color *)&colors_array; 
+              SDL_PixelFormat pixel_format = {SDL_PIXELFORMAT_INDEX1MSB, palette, 8, 1, 0, 0, 0, 0};
+              surf->format = &pixel_format; 
+              */
+            //surf->format->BytesPerPixel = 1;
+            //surf->format->palette = NULL;
+            /*
+               void* pixels = malloc(256*224);
+
+               int bpp = 1;
+
+               for (int i = 0; i < 256; i++) {
+               for (int j = 0; j < 224; j+=8) {
+               uint8_t *pix = &state.memory[0x2400 + i * (256/8) + j / 8];
+            //uint8_t *p = (uint8_t *) surf->pixels + i * surf->pitch + j* bpp;
+            uint8_t *p = (uint8_t *) pixels + i * 224 + j* bpp;
+
+            //printf("%02x, %02x, %02x\n", pix[0], pix[0], pix[1]);
+            for (int k = 0; k < 8; k++) {
+            p[k] = (pix[0] >> k) & 0x01;
+            if (p[k] == 1) {
+            p[k] = 0xff;
+            }
+            }
+
+            // Vertical Flip
+            //int offset = (255-j)*(224) + (i*4);
+            //buffer8888 += pix;
+            }
+            }
+
+            SDL_Surface* surf = SDL_CreateRGBSurfaceFrom(pixels, 256, 224, 4, 224, 0x60, 0x18, 0x06, 0x80);
+
+            //SDL_LockSurface(surf);
+
             SDL_Palette* palette = SDL_AllocPalette(2);
             SDL_Color white = {255,255,255,0};
             SDL_Color black = {0,0,0,0};
             SDL_Color colors_array[2] = {black, white};
             palette->colors = (SDL_Color *)&colors_array; 
-            SDL_PixelFormat pixel_format = {SDL_PIXELFORMAT_INDEX1MSB, palette, 8, 1, 0, 0, 0, 0};
-            surf->format = &pixel_format; 
+            SDL_PixelFormat pixel_format = {SDL_PIXELFORMAT_INDEX1LSB, palette, 8, 1, {0, 0}, 0x60, 0x18, 0x06, 0x0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL};
+            surf->format = &pixel_format;
 
-            //surf->format->BytesPerPixel = 1;
-            //surf->format->palette = NULL;
-            int bpp = surf->format->BytesPerPixel;
-
-            for (int i = 0; i < 224; i++) {
-                for (int j = 0; j < 256; j+=8) {
-                    uint8_t *pix = &state.memory[0x2400 + i * (256/8) + j / 8];
-                    uint8_t *p = (uint8_t *) surf->pixels + i * surf->pitch + j* bpp;
-
-                    //printf("%02x, %02x, %02x\n", pix[0], pix[0], pix[1]);
-                    for (int k = 0; k < 8; k++) {
-                        p[k] = (pix[0] >> k) & 0x01;
-                    }
-
-                    // Vertical Flip
-                    //int offset = (255-j)*(224) + (i*4);
-                    //buffer8888 += pix;
-                }
-            }
-
+            //printf("Surface Created!");
             SDL_BlitSurface(surf, NULL, SDL_GetWindowSurface(gWindow), NULL);
-            printf("Blitted Surface!"); 
+            //printf("Blitted Surface!"); 
             SDL_UpdateWindowSurface(gWindow);
 
-            if(surf == NULL) {
-                printf("Surface not Created");
-            }
 
-            double now = getMicrotime();
+            if(surf == NULL) {
+            printf("Surface not Created\n");
+            }*/
 
             if (lastTime == 0.0) {
-                lastTime = now;
-                nextInterrupt = lastTime + 16000;
+                lastTime = getMicrotime();
+                nextInterrupt = lastTime + .016667;
                 whichInterrupt = 1;
             }
 
-            if (int_enable && now > nextInterrupt) {
+            if (int_enable && getMicrotime() > nextInterrupt) {
                 if (whichInterrupt == 1) {
                     // Gen Interrupt
+                    GenerateInterrupt(1);
                     whichInterrupt = 2;
                 }
                 else {
                     // Gen Interrupt
+                    GenerateInterrupt(2);
                     whichInterrupt = 1;
                 }
-                nextInterrupt = now + 8000.0;
+                draw();
+                nextInterrupt = getMicrotime() + 0.008333;
+                printf("Draw!");
             }
+            printf("%d, %f, %f\n", int_enable, getMicrotime(), nextInterrupt);
 
-            int num_cycles = (now - lastTime) * 2;
-            int cycles = 0;
+            double num_cycles = (getMicrotime() - lastTime) * 2000000.0 + leftover_cycles;
+            printf("%f, %d\n", num_cycles, numCycles(&state));
+            //int num_cycles = 100000;
+            //int cnt = 0;
+            double cycles = (double) numCycles(&state);
+            int op_run = 113000;
+            if(cycles == 0) printf("%02x\n", state.memory[state.pc]);
             while (num_cycles > cycles) {
+                //while (cnt <= op_run) {
                 unsigned char* opcode = &state.memory[state.pc];
+
+                // Uncomment when flickering screen fixed
+                if (state.pc == 0x0ada) {
+                    state.memory[0x20c0] = 0;
+                }
+
+                // Second stop point
+                if (state.pc == 0x0a9e) {
+                    state.memory[0x20c0] = 1;
+                }
+
+                // Query number of cycles
+                // If not sufficient, add to leftover and exit
+                // Else step emulator and reset leftover
+
                 if (*opcode == 0xdb) {
                     uint8_t port = opcode[1];
                     state.a = MachineIN(port);
-                    state.pc++;
-                    cycles += 4;
-                    printf("%s HIT! \n", opcode);
+                    state.pc += 2;
+                    //printf("%02x%02x, %02x, HIT! %ld\n", opcode[0], opcode[1], state.a, cnt);
                 }
                 else if(*opcode == 0xd3) {
                     //uint8_t port = opcode[1];
@@ -265,21 +387,31 @@ int main( int argc, char* args[])
                     state.pc += 2;
                 }
                 else
-                    cycles += Emulate8080Op(&state);
-                //printf("%02x, ", *opcode);
+                    Emulate8080Op(&state);
                 
-                /*
-                printf("%d - ", cnt+1);
+                num_cycles -= cycles;
+                leftover_cycles = 0.0; 
+                //printf("%02x, ", opcode);
+                //
+                if (cnt >= 500000) {
+                  draw();
+                  sleep(5000);
+                //cnt += 1;
+                }
+
+                /*if (cnt >= op_run ) {
+                printf("%ld - %02x%02x%02x - ", cnt+1, state.memory[state.pc], state.memory[state.pc+1], state.memory[state.pc+2]);
                 printf("\tC=%d,P=%d,S=%d,Z=%d\n", state.cc.cy, state.cc.p,
-                    state.cc.s, state.cc.z);
+                        state.cc.s, state.cc.z);
                 printf("\tA $%02x B $%02x C $%02x D $%02x E $%02x H $%02x L $%02x PC %04x SP %04x\n",
-                    state.a, state.b, state.c, state.d,
-                    state.e, state.h, state.l, state.pc, state.sp);
-                */
+                        state.a, state.b, state.c, state.d,
+                        state.e, state.h, state.l, state.pc, state.sp);
+                }*/
                 cnt += 1;
             }  
 
-            lastTime = now;
+            leftover_cycles += num_cycles;
+            lastTime = getMicrotime();
 
             /*
             // Handle events on queue
@@ -290,6 +422,19 @@ int main( int argc, char* args[])
             }
             }*/
 
+            // Draw the screen
+            /*if (now - drawTime >= 0.01666) {
+                // Print state
+                //printf("%lu - ", cnt+1);
+                  printf("\tC=%d,P=%d,S=%d,Z=%d\n", state.cc.cy, state.cc.p,
+                  state.cc.s, state.cc.z);
+                  printf("\tA $%02x B $%02x C $%02x D $%02x E $%02x H $%02x L $%02x PC %04x SP %04x\n",
+                  state.a, state.b, state.c, state.d,
+                  state.e, state.h, state.l, state.pc, state.sp);
+                  //
+                draw();
+                drawTime = now;
+            }*/
 
             // Apply the image
             //SDL_BlitSurface( gImage, NULL, gScreenSurface, NULL);
@@ -297,12 +442,13 @@ int main( int argc, char* args[])
             // Update the surface
             //SDL_UpdateWindowSurface( gWindow );
 
+            //sleep(1000);
+            }
+
         }
 
+        // Free resources and close SDL
+        closeMedia();
+
+        return 0;
     }
-
-    // Free resources and close SDL
-    closeMedia();
-
-    return 0;
-}
