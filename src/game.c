@@ -22,7 +22,6 @@ State8080 state;
 uint8_t shift0 = 0;
 uint8_t shift1 = 0;
 uint8_t shift_offset = 0;
-uint8_t int_enable = 0;
 long len_of_file = 0;
 
 // The window
@@ -96,17 +95,17 @@ uint8_t MachineIN(uint8_t port) {
     uint8_t a = 0x00;
     switch(port) {
         case 0:
-            return 0x01;
-            break;
+        return 0x01;
+        break;
         case 1:
-            return 0x00;
-            break;
+        return 0x00;
+        break;
 
         case 3: {
-                    uint16_t v = (shift1 << 8) | shift0;
-                    a = ((v >> (8 - shift_offset)) & 0xff);
-                    break;
-                }
+            uint16_t v = (shift1 << 8) | shift0;
+            a = ((v >> (8 - shift_offset)) & 0xff);
+            break;
+        }
     }
     return a;
 }
@@ -115,12 +114,12 @@ void MachineOUT(uint8_t port, uint8_t value) {
     //uint8_t a;
     switch(port) {
         case 2:
-            shift_offset = value & 0x7;
-            break;
+        shift_offset = value & 0x7;
+        break;
         case 4:
-            shift0 = shift1;
-            shift1 = value;
-            break;
+        shift0 = shift1;
+        shift1 = value;
+        break;
     }
 }
 
@@ -171,13 +170,13 @@ void draw() {
 }
 
 void GenerateInterrupt(int interrupt) {
-   // Push
-   state.sp -= 2;
-   state.memory[state.sp] = state.pc & 0xff;
-   state.memory[state.sp+1] = (state.pc & 0xff00) >> 8;
+    // Push
+    state.sp -= 2;
+    state.memory[state.sp] = (state.pc & 0xff00) >> 8;
+    state.memory[state.sp+1] = state.pc & 0xff-3;
 
-   state.pc = 8 * interrupt;
-   state.int_enable = 0;
+    state.pc = 8 * interrupt - 1;
+    state.int_enable = 0;
 }
 
 int main( int argc, char* args[])
@@ -199,17 +198,20 @@ int main( int argc, char* args[])
         double nextInterrupt;
         int whichInterrupt;
         long cnt = 0;
+        int flag = 0;
 
         // While application is running
         while (!quit) {
 
             if (lastTime == 0.0) {
                 lastTime = getMicrotime();
-                nextInterrupt = lastTime + .016667;
+                nextInterrupt = lastTime + .0016667;
                 whichInterrupt = 1;
             }
 
-            if (int_enable && getMicrotime() > nextInterrupt) {
+            //printf("%d, %f, %f\n", state.int_enable, getMicrotime(), nextInterrupt);
+            double now = getMicrotime();
+            if (state.int_enable && now > nextInterrupt) {
                 if (whichInterrupt == 1) {
                     // Gen Interrupt
                     GenerateInterrupt(1);
@@ -221,25 +223,31 @@ int main( int argc, char* args[])
                     whichInterrupt = 1;
                 }
                 draw();
-                nextInterrupt = getMicrotime() + 0.008333;
-                printf("Draw!");
+                nextInterrupt = now + 0.00433;
+                printf("Draw!\n");
             }
-            printf("%d, %f, %f\n", int_enable, getMicrotime(), nextInterrupt);
 
-            double num_cycles = (getMicrotime() - lastTime) * 2000000.0 + leftover_cycles;
-            printf("%f, %d\n", num_cycles, numCycles(&state));
+            double num_cycles = 0;
+            if (!flag) {
+                num_cycles = (getMicrotime() - lastTime) * 2000000;
+            } else {
+                num_cycles = (getMicrotime() - lastTime) * 100;
+            }
+            //printf("%f, %f, %d\n", num_cycles, leftover_cycles, numCycles(&state));
             //int num_cycles = 100000;
             //int cnt = 0;
             double cycles = (double) numCycles(&state);
-            int op_run = 113000;
+            //int op_run = 113000;
             if(cycles == 0) printf("%02x\n", state.memory[state.pc]);
-            while (num_cycles > cycles) {
+            while (num_cycles + leftover_cycles > cycles) {
                 //while (cnt <= op_run) {
                 unsigned char* opcode = &state.memory[state.pc];
 
-                // Uncomment when flickering screen fixed
+                // First stop point
                 if (state.pc == 0x0ada) {
                     state.memory[0x20c0] = 0;
+                    flag = 1;
+                    num_cycles = 0;
                 }
 
                 // Second stop point
@@ -258,30 +266,31 @@ int main( int argc, char* args[])
                     //MachineOUT(port);
                     state.pc += 2;
                 }
-                else
+                else {
                     Emulate8080Op(&state);
+                }
 
-                num_cycles -= cycles;
+                num_cycles = num_cycles - cycles;
                 leftover_cycles = 0.0;
                 //printf("%02x, ", opcode);
                 if (cnt >= 500000) {
-                  draw();
-                  sleep(5000);
-                //cnt += 1;
+                    draw();
+                    sleep(5000);
+                    //cnt += 1;
                 }
 
-                /*if (cnt >= op_run ) {
+                //if (cnt >= op_run ) {
                 printf("%ld - %02x%02x%02x - ", cnt+1, state.memory[state.pc], state.memory[state.pc+1], state.memory[state.pc+2]);
                 printf("\tC=%d,P=%d,S=%d,Z=%d\n", state.cc.cy, state.cc.p,
-                        state.cc.s, state.cc.z);
+                state.cc.s, state.cc.z);
                 printf("\tA $%02x B $%02x C $%02x D $%02x E $%02x H $%02x L $%02x PC %04x SP %04x\n",
-                        state.a, state.b, state.c, state.d,
-                        state.e, state.h, state.l, state.pc, state.sp);
-                }*/
+                state.a, state.b, state.c, state.d,
+                state.e, state.h, state.l, state.pc, state.sp);
+                //}
                 cnt += 1;
             }
-
-            leftover_cycles += num_cycles;
+            if (num_cycles > 0)
+                leftover_cycles += num_cycles;
             lastTime = getMicrotime();
 
             /*
@@ -290,14 +299,14 @@ int main( int argc, char* args[])
             // User requests quit
             if (e.type == SDL_QUIT) {
             quit = 1;
-            }
-            }*/
-            }
-
+        }
+    }*/
         }
 
-        // Free resources and close SDL
-        closeMedia();
+}
 
-        return 0;
-    }
+// Free resources and close SDL
+closeMedia();
+
+return 0;
+}
