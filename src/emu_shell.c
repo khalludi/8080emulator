@@ -463,6 +463,7 @@ char Emulate8080Op(State8080* state)
             state->cc.z = (answer == 0);
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.p = Parity(answer);
+            state->cc.ac = ((state->b & 0xf) + 1 > 0xf);
             cycles = 5;
             break;
         }
@@ -473,6 +474,7 @@ char Emulate8080Op(State8080* state)
             state->cc.z = (answer == 0);
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.p = Parity(answer);
+            state->cc.ac = ((state->b & 0xf) + ~(0x1) + 1 > 0xf);
             cycles = 5;
             break;
         }
@@ -523,6 +525,7 @@ char Emulate8080Op(State8080* state)
             state->cc.z = (answer == 0);
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.p = Parity(answer);
+            state->cc.ac = ((state->c & 0xf) + 1 > 0xf);
             cycles = 5;
             break;
         }
@@ -533,6 +536,7 @@ char Emulate8080Op(State8080* state)
             state->cc.z = (answer == 0);
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.p = Parity(answer);
+            state->cc.ac = ((state->c & 0xf) + ~(0x1) + 1 > 0xf);
             cycles = 5;
             break;
         }
@@ -581,6 +585,7 @@ char Emulate8080Op(State8080* state)
             state->cc.z = (answer == 0);
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.p = Parity(answer);
+            state->cc.ac = ((state->d & 0xf) + 1 > 0xf);
             cycles = 5;
             break;
         }
@@ -591,6 +596,7 @@ char Emulate8080Op(State8080* state)
             state->cc.z = (answer == 0);
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.p = Parity(answer);
+            state->cc.ac = ((state->d & 0xf) + ~(0x1) + 1 > 0xf);
             cycles = 5;
             break;
         }
@@ -635,6 +641,7 @@ char Emulate8080Op(State8080* state)
             state->cc.z = (answer == 0);
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.p = Parity(answer);
+            state->cc.ac = ((state->e & 0xf) + 1 > 0xf);
             cycles = 5;
             break;
         }
@@ -645,6 +652,7 @@ char Emulate8080Op(State8080* state)
             state->cc.z = (answer == 0);
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.p = Parity(answer);
+            state->cc.ac = ((state->e & 0xf) + ~(0x1) + 1 > 0xf);
             cycles = 5;
             break;
         }
@@ -684,6 +692,7 @@ char Emulate8080Op(State8080* state)
             state->cc.z = (answer == 0);
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.p = Parity(answer);
+            state->cc.ac = ((state->h & 0xf) + 1 > 0xf);
             cycles = 5;
             break;
         }
@@ -694,14 +703,28 @@ char Emulate8080Op(State8080* state)
             state->cc.z = (answer == 0);
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.p = Parity(answer);
+            state->cc.ac = ((state->h & 0xf) + ~(0x1) + 1 > 0xf);
             cycles = 5;
             break;
         }
         case 0x26:                          // MVI H,D8
-        state->h = opcode[1];
-        state->pc += 1;
-        cycles = 7;
-        break;
+        {
+            state->h = opcode[1];
+            state->pc += 1;
+            cycles = 7;
+            break;
+        }
+        case 0x27:                          // DAA
+        {
+            if (state->cc.ac || (state->a & 0xf) > 9) {
+                state->cc.ac = ((state->a & 0xf) + 6 > 0xf);
+                state->a += 6;
+            }
+            if (state->cc.cy || (state->a >> 4) > 9) {
+                state->cc.cy = (((state->a & 0xf0) + 0x60) >> 4 > 0xf);
+                state->a = (((state->a >> 4) + 6) << 4) | (state->a & 0xf);
+            }
+        }
         case 0x28: cycles = 4; break;
         case 0x29:                          // DAD H
         {
@@ -728,6 +751,7 @@ char Emulate8080Op(State8080* state)
             state->cc.z = (answer == 0);
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.p = Parity(answer);
+            state->cc.ac = ((state->l & 0xf) + 1 > 0xf);
             cycles = 5;
             break;
         }
@@ -738,6 +762,7 @@ char Emulate8080Op(State8080* state)
             state->cc.z = (answer == 0);
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.p = Parity(answer);
+            state->cc.ac = ((state->l & 0xf) + ~(0x1) + 1 > 0xf);
             cycles = 5;
             break;
         }
@@ -771,6 +796,7 @@ char Emulate8080Op(State8080* state)
             state->cc.z = (answer == 0);
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.p = Parity(answer & 0xFF);
+            state->cc.ac = ((state->memory[offset] & 0xf) + 1 > 0xf);
             cycles = 10;
             break;
         }
@@ -782,6 +808,7 @@ char Emulate8080Op(State8080* state)
             state->cc.z = (answer == 0);
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.p = Parity(answer);
+            state->cc.ac = ((state->memory[offset] & 0xf) + ~(0x1) + 1 > 0xf);
             cycles = 10;
             break;
         }
@@ -817,6 +844,7 @@ char Emulate8080Op(State8080* state)
             state->cc.z = (answer == 0);
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.p = Parity(answer);
+            state->cc.ac = ((state->a & 0xf) + 1 > 0xf);
             cycles = 5;
             break;
         }
@@ -827,6 +855,7 @@ char Emulate8080Op(State8080* state)
             state->cc.z = (answer == 0);
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.p = Parity(answer);
+            state->cc.ac = ((state->a & 0xf) + ~(0x1) + 1 > 0xf);
             cycles = 5;
             break;
         }
@@ -899,6 +928,7 @@ char Emulate8080Op(State8080* state)
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.cy = (answer > 0xff);
             state->cc.p = Parity(answer & 0xff);
+            state->cc.ac = ((state->a & 0xf) + (state->b & 0xf) > 0xf);
             state->a = answer & 0xff;
             cycles = 4;
             break;
@@ -910,6 +940,7 @@ char Emulate8080Op(State8080* state)
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.cy = (answer > 0xff);
             state->cc.p = Parity(answer & 0xff);
+            state->cc.ac = ((state->a & 0xf) + (state->c & 0xf) > 0xf);
             state->a = answer & 0xff;
             cycles = 4;
             break;
@@ -922,6 +953,7 @@ char Emulate8080Op(State8080* state)
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.cy = (answer > 0xff);
             state->cc.p = Parity(answer & 0xff);
+            state->cc.ac = ((state->a & 0xf) + (state->d & 0xf) > 0xf);
             state->a = answer & 0xff;
             cycles = 4;
             break;
@@ -933,6 +965,7 @@ char Emulate8080Op(State8080* state)
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.cy = (answer > 0xff);
             state->cc.p = Parity(answer & 0xff);
+            state->cc.ac = ((state->a & 0xf) + (state->e & 0xf) > 0xf);
             state->a = answer & 0xff;
             cycles = 4;
             break;
@@ -944,6 +977,7 @@ char Emulate8080Op(State8080* state)
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.cy = (answer > 0xff);
             state->cc.p = Parity(answer & 0xff);
+            state->cc.ac = ((state->a & 0xf) + (state->h & 0xf) > 0xf);
             state->a = answer & 0xff;
             cycles = 4;
             break;
@@ -955,6 +989,7 @@ char Emulate8080Op(State8080* state)
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.cy = (answer > 0xff);
             state->cc.p = Parity(answer & 0xff);
+            state->cc.ac = ((state->a & 0xf) + (state->l & 0xf) > 0xf);
             state->a = answer & 0xff;
             cycles = 4;
             break;
@@ -967,6 +1002,7 @@ char Emulate8080Op(State8080* state)
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.cy = (answer > 0xff);
             state->cc.p = Parity(answer & 0xff);
+            state->cc.ac = ((state->a & 0xf) + (state->memory[offset] & 0xf) > 0xf);
             state->a = answer & 0xff;
             cycles = 7;
             break;
@@ -978,6 +1014,7 @@ char Emulate8080Op(State8080* state)
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.cy = (answer > 0xff);
             state->cc.p = Parity(answer & 0xff);
+            state->cc.ac = ((state->a & 0xf) + (state->a & 0xf) > 0xf);
             state->a = answer & 0xff;
             cycles = 4;
             break;
@@ -990,6 +1027,7 @@ char Emulate8080Op(State8080* state)
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.cy = (answer > 0xff);
             state->cc.p = Parity(answer & 0xff);
+            state->cc.ac = ((state->a & 0xf) + (state->b & 0xf) + state->cc.cy > 0xf);
             state->a = answer & 0xff;
             cycles = 4;
             break;
@@ -1001,6 +1039,7 @@ char Emulate8080Op(State8080* state)
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.cy = (answer > 0xff);
             state->cc.p = Parity(answer & 0xff);
+            state->cc.ac = ((state->a & 0xf) + (state->c & 0xf) + state->cc.cy > 0xf);
             state->a = answer & 0xff;
             cycles = 4;
             break;
@@ -1012,6 +1051,7 @@ char Emulate8080Op(State8080* state)
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.cy = (answer > 0xff);
             state->cc.p = Parity(answer & 0xff);
+            state->cc.ac = ((state->a & 0xf) + (state->d & 0xf) + state->cc.cy > 0xf);
             state->a = answer & 0xff;
             cycles = 4;
             break;
@@ -1023,6 +1063,7 @@ char Emulate8080Op(State8080* state)
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.cy = (answer > 0xff);
             state->cc.p = Parity(answer & 0xff);
+            state->cc.ac = ((state->a & 0xf) + (state->e & 0xf) + state->cc.cy > 0xf);
             state->a = answer & 0xff;
             cycles = 4;
             break;
@@ -1034,6 +1075,7 @@ char Emulate8080Op(State8080* state)
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.cy = (answer > 0xff);
             state->cc.p = Parity(answer & 0xff);
+            state->cc.ac = ((state->a & 0xf) + (state->h & 0xf) + state->cc.cy > 0xf);
             state->a = answer & 0xff;
             cycles = 4;
             break;
@@ -1045,6 +1087,7 @@ char Emulate8080Op(State8080* state)
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.cy = (answer > 0xff);
             state->cc.p = Parity(answer & 0xff);
+            state->cc.ac = ((state->a & 0xf) + (state->l & 0xf) + state->cc.cy > 0xf);
             state->a = answer & 0xff;
             cycles = 4;
             break;
@@ -1057,6 +1100,7 @@ char Emulate8080Op(State8080* state)
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.cy = (answer > 0xff);
             state->cc.p = Parity(answer & 0xff);
+            state->cc.ac = ((state->a & 0xf) + (state->memory[offset] & 0xf) + state->cc.cy > 0xf);
             state->a = answer & 0xff;
             cycles = 7;
             break;
@@ -1068,6 +1112,7 @@ char Emulate8080Op(State8080* state)
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.cy = (answer > 0xff);
             state->cc.p = Parity(answer & 0xff);
+            state->cc.ac = ((state->a & 0xf) + (state->a & 0xf) + state->cc.cy > 0xf);
             state->a = answer & 0xff;
             cycles = 4;
             break;
@@ -1080,6 +1125,7 @@ char Emulate8080Op(State8080* state)
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.cy = ~(answer > 0xff);
             state->cc.p = Parity(answer & 0xff);
+            state->cc.ac = ((state->a & 0xf) + ~(state->b & 0xf) + 1 > 0xf);
             state->a = answer & 0xff;
             cycles = 4;
             break;
@@ -1091,6 +1137,7 @@ char Emulate8080Op(State8080* state)
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.cy = ~(answer > 0xff);
             state->cc.p = Parity(answer & 0xff);
+            state->cc.ac = ((state->a & 0xf) + ~(state->c & 0xf) + 1 > 0xf);
             state->a = answer & 0xff;
             cycles = 4;
             break;
@@ -1102,6 +1149,7 @@ char Emulate8080Op(State8080* state)
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.cy = ~(answer > 0xff);
             state->cc.p = Parity(answer & 0xff);
+            state->cc.ac = ((state->a & 0xf) + ~(state->d & 0xf) + 1 > 0xf);
             state->a = answer & 0xff;
             cycles = 4;
             break;
@@ -1113,6 +1161,7 @@ char Emulate8080Op(State8080* state)
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.cy = ~(answer > 0xff);
             state->cc.p = Parity(answer & 0xff);
+            state->cc.ac = ((state->a & 0xf) + ~(state->e & 0xf) + 1 > 0xf);
             state->a = answer & 0xff;
             cycles = 4;
             break;
@@ -1124,6 +1173,7 @@ char Emulate8080Op(State8080* state)
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.cy = ~(answer > 0xff);
             state->cc.p = Parity(answer & 0xff);
+            state->cc.ac = ((state->a & 0xf) + ~(state->h & 0xf) + 1 > 0xf);
             state->a = answer & 0xff;
             cycles = 4;
             break;
@@ -1135,6 +1185,7 @@ char Emulate8080Op(State8080* state)
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.cy = ~(answer > 0xff);
             state->cc.p = Parity(answer & 0xff);
+            state->cc.ac = ((state->a & 0xf) + ~(state->l & 0xf) + 1 > 0xf);
             state->a = answer & 0xff;
             cycles = 4;
             break;
@@ -1147,6 +1198,7 @@ char Emulate8080Op(State8080* state)
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.cy = ~(answer > 0xff);
             state->cc.p = Parity(answer & 0xff);
+            state->cc.ac = ((state->a & 0xf) + ~(state->memory[offset] & 0xf) + 1 > 0xf);
             state->a = answer & 0xff;
             cycles = 7;
             break;
@@ -1158,6 +1210,7 @@ char Emulate8080Op(State8080* state)
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.cy = ~(answer > 0xff);
             state->cc.p = Parity(answer & 0xff);
+            state->cc.ac = ((state->a & 0xf) + ~(state->a & 0xf) + 1 > 0xf);
             state->a = answer & 0xff;
             cycles = 4;
             break;
@@ -1170,6 +1223,7 @@ char Emulate8080Op(State8080* state)
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.cy = ~(answer > 0xff);
             state->cc.p = Parity(answer & 0xff);
+            state->cc.ac = ((state->a & 0xf) + state->cc.cy + ~(state->b & 0xf) + 1 > 0xf);
             state->a = answer & 0xff;
             cycles = 4;
             break;
@@ -1181,6 +1235,7 @@ char Emulate8080Op(State8080* state)
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.cy = ~(answer > 0xff);
             state->cc.p = Parity(answer & 0xff);
+            state->cc.ac = ((state->a & 0xf) + state->cc.cy + ~(state->c & 0xf) + 1 > 0xf);
             state->a = answer & 0xff;
             cycles = 4;
             break;
@@ -1192,6 +1247,7 @@ char Emulate8080Op(State8080* state)
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.cy = ~(answer > 0xff);
             state->cc.p = Parity(answer & 0xff);
+            state->cc.ac = ((state->a & 0xf) + state->cc.cy + ~(state->d & 0xf) + 1 > 0xf);
             state->a = answer & 0xff;
             cycles = 4;
             break;
@@ -1203,6 +1259,7 @@ char Emulate8080Op(State8080* state)
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.cy = ~(answer > 0xff);
             state->cc.p = Parity(answer & 0xff);
+            state->cc.ac = ((state->a & 0xf) + state->cc.cy + ~(state->e & 0xf) + 1 > 0xf);
             state->a = answer & 0xff;
             cycles = 4;
             break;
@@ -1214,6 +1271,7 @@ char Emulate8080Op(State8080* state)
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.cy = ~(answer > 0xff);
             state->cc.p = Parity(answer & 0xff);
+            state->cc.ac = ((state->a & 0xf) + state->cc.cy + ~(state->h & 0xf) + 1 > 0xf);
             state->a = answer & 0xff;
             cycles = 4;
             break;
@@ -1225,6 +1283,7 @@ char Emulate8080Op(State8080* state)
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.cy = ~(answer > 0xff);
             state->cc.p = Parity(answer & 0xff);
+            state->cc.ac = ((state->a & 0xf) + state->cc.cy + ~(state->l & 0xf) + 1 > 0xf);
             state->a = answer & 0xff;
             cycles = 4;
             break;
@@ -1237,6 +1296,7 @@ char Emulate8080Op(State8080* state)
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.cy = ~(answer > 0xff);
             state->cc.p = Parity(answer & 0xff);
+            state->cc.ac = ((state->a & 0xf) + state->cc.cy + ~(state->memory[offset] & 0xf) + 1 > 0xf);
             state->a = answer & 0xff;
             cycles = 7;
             break;
@@ -1248,6 +1308,7 @@ char Emulate8080Op(State8080* state)
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.cy = ~(answer > 0xff);
             state->cc.p = Parity(answer & 0xff);
+            state->cc.ac = ((state->a & 0xf) + state->cc.cy + ~(state->a & 0xf) + 1 > 0xf);
             state->a = answer & 0xff;
             cycles = 4;
             break;
@@ -1350,6 +1411,7 @@ char Emulate8080Op(State8080* state)
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.cy = 0;
             state->cc.p = Parity(answer & 0xff);
+            state->cc.ac = 0;
             state->a = answer & 0xff;
             cycles = 4;
             break;
@@ -1361,6 +1423,7 @@ char Emulate8080Op(State8080* state)
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.cy = 0;
             state->cc.p = Parity(answer & 0xff);
+            state->cc.ac = 0;
             state->a = answer & 0xff;
             cycles = 4;
             break;
@@ -1372,6 +1435,7 @@ char Emulate8080Op(State8080* state)
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.cy = 0;
             state->cc.p = Parity(answer & 0xff);
+            state->cc.ac = 0;
             state->a = answer & 0xff;
             cycles = 4;
             break;
@@ -1383,6 +1447,7 @@ char Emulate8080Op(State8080* state)
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.cy = 0;
             state->cc.p = Parity(answer & 0xff);
+            state->cc.ac = 0;
             state->a = answer & 0xff;
             cycles = 4;
             break;
@@ -1394,6 +1459,7 @@ char Emulate8080Op(State8080* state)
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.cy = 0;
             state->cc.p = Parity(answer & 0xff);
+            state->cc.ac = 0;
             state->a = answer & 0xff;
             cycles = 4;
             break;
@@ -1405,6 +1471,7 @@ char Emulate8080Op(State8080* state)
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.cy = 0;
             state->cc.p = Parity(answer & 0xff);
+            state->cc.ac = 0;
             state->a = answer & 0xff;
             cycles = 4;
             break;
@@ -1417,6 +1484,7 @@ char Emulate8080Op(State8080* state)
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.cy = 0;
             state->cc.p = Parity(answer & 0xff);
+            state->cc.ac = 0;
             state->a = answer & 0xff;
             cycles = 7;
             break;
@@ -1428,6 +1496,7 @@ char Emulate8080Op(State8080* state)
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.cy = 0;
             state->cc.p = Parity(answer & 0xff);
+            state->cc.ac = 0;
             state->a = answer & 0xff;
             cycles = 4;
             break;
@@ -1440,6 +1509,7 @@ char Emulate8080Op(State8080* state)
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.cy = 0;
             state->cc.p = Parity(answer & 0xff);
+            state->cc.ac = 0;
             state->a = answer & 0xff;
             cycles = 4;
             break;
@@ -1451,6 +1521,7 @@ char Emulate8080Op(State8080* state)
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.cy = 0;
             state->cc.p = Parity(answer & 0xff);
+            state->cc.ac = 0;
             state->a = answer & 0xff;
             cycles = 4;
             break;
@@ -1462,6 +1533,7 @@ char Emulate8080Op(State8080* state)
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.cy = 0;
             state->cc.p = Parity(answer & 0xff);
+            state->cc.ac = 0;
             state->a = answer & 0xff;
             cycles = 4;
             break;
@@ -1473,6 +1545,7 @@ char Emulate8080Op(State8080* state)
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.cy = 0;
             state->cc.p = Parity(answer & 0xff);
+            state->cc.ac = 0;
             state->a = answer & 0xff;
             cycles = 4;
             break;
@@ -1484,6 +1557,7 @@ char Emulate8080Op(State8080* state)
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.cy = 0;
             state->cc.p = Parity(answer & 0xff);
+            state->cc.ac = 0;
             state->a = answer & 0xff;
             cycles = 4;
             break;
@@ -1495,6 +1569,7 @@ char Emulate8080Op(State8080* state)
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.cy = 0;
             state->cc.p = Parity(answer & 0xff);
+            state->cc.ac = 0;
             state->a = answer & 0xff;
             cycles = 4;
             break;
@@ -1507,6 +1582,7 @@ char Emulate8080Op(State8080* state)
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.cy = 0;
             state->cc.p = Parity(answer & 0xff);
+            state->cc.ac = 0;
             state->a = answer & 0xff;
             cycles = 7;
             break;
@@ -1518,6 +1594,7 @@ char Emulate8080Op(State8080* state)
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.cy = 0;
             state->cc.p = Parity(answer & 0xff);
+            state->cc.ac = 0;
             state->a = answer & 0xff;
             cycles = 4;
             break;
@@ -1530,6 +1607,7 @@ char Emulate8080Op(State8080* state)
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.cy = ~(answer > 0xff);
             state->cc.p = Parity(answer & 0xff);
+            state->cc.ac = ((state->a) + ~(state->b & 0xf) + 1 > 0xf);
             cycles = 4;
             break;
         }
@@ -1540,6 +1618,7 @@ char Emulate8080Op(State8080* state)
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.cy = ~(answer > 0xff);
             state->cc.p = Parity(answer & 0xff);
+            state->cc.ac = ((state->a) + ~(state->c & 0xf) + 1 > 0xf);
             cycles = 4;
             break;
         }
@@ -1550,6 +1629,7 @@ char Emulate8080Op(State8080* state)
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.cy = ~(answer > 0xff);
             state->cc.p = Parity(answer & 0xff);
+            state->cc.ac = ((state->a) + ~(state->d & 0xf) + 1 > 0xf);
             cycles = 4;
             break;
         }
@@ -1560,6 +1640,7 @@ char Emulate8080Op(State8080* state)
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.cy = ~(answer > 0xff);
             state->cc.p = Parity(answer & 0xff);
+            state->cc.ac = ((state->a) + ~(state->e & 0xf) + 1 > 0xf);
             cycles = 4;
             break;
         }
@@ -1570,6 +1651,7 @@ char Emulate8080Op(State8080* state)
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.cy = ~(answer > 0xff);
             state->cc.p = Parity(answer & 0xff);
+            state->cc.ac = ((state->a) + ~(state->h & 0xf) + 1 > 0xf);
             cycles = 4;
             break;
         }
@@ -1580,6 +1662,7 @@ char Emulate8080Op(State8080* state)
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.cy = ~(answer > 0xff);
             state->cc.p = Parity(answer & 0xff);
+            state->cc.ac = ((state->a) + ~(state->l & 0xf) + 1 > 0xf);
             cycles = 4;
             break;
         }
@@ -1591,6 +1674,7 @@ char Emulate8080Op(State8080* state)
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.cy = ~(answer > 0xff);
             state->cc.p = Parity(answer & 0xff);
+            state->cc.ac = ((state->a) + ~(state->memory[offset] & 0xf) + 1 > 0xf);
             cycles = 7;
             break;
         }
@@ -1601,6 +1685,7 @@ char Emulate8080Op(State8080* state)
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.cy = ~(answer > 0xff);
             state->cc.p = Parity(answer & 0xff);
+            state->cc.ac = ((state->a) + ~(state->a & 0xf) + 1 > 0xf);
             cycles = 4;
             break;
         }
@@ -1657,6 +1742,7 @@ char Emulate8080Op(State8080* state)
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.cy = (answer > 0xff);
             state->cc.p = Parity(answer & 0xff);
+            state->cc.ac = ((state->a & 0xf) + (opcode[1] & 0xf) > 0xf);
             state->a = answer & 0xff;
             state->pc += 1;
             cycles = 7;
@@ -1756,6 +1842,7 @@ char Emulate8080Op(State8080* state)
             state->cc.z = (answer == 0);
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.p = Parity(answer);
+            state->cc.ac = ((state->a & 0xf) + ~(opcode[1] & 0xf) + 1 > 0xf);
             state->pc += 1;
             cycles = 7;
             break;
@@ -1857,6 +1944,7 @@ char Emulate8080Op(State8080* state)
             state->cc.s = ((answer & 0x80) != 0);
             state->cc.cy = (answer > 0xff);
             state->cc.p = Parity(answer & 0xff);
+            state->cc.ac = ((state->a & 0xf) + ~(opcode[1] & 0xf) + 1 > 0xf);
             state->pc += 1;
             cycles = 7;
             break;
