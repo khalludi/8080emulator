@@ -172,8 +172,11 @@ void draw() {
 void GenerateInterrupt(int interrupt) {
     // Push
     state.sp -= 2;
+    state.pc -= 1;
     state.memory[state.sp] = (state.pc & 0xff00) >> 8;
-    state.memory[state.sp+1] = state.pc & 0xff-3;
+    state.memory[state.sp+1] = (state.pc & 0xff);
+
+    printf("\n%02x\n", state.pc);
 
     state.pc = 8 * interrupt - 1;
     state.int_enable = 0;
@@ -223,7 +226,7 @@ int main( int argc, char* args[])
                     whichInterrupt = 1;
                 }
                 draw();
-                nextInterrupt = now + 0.00433;
+                nextInterrupt = getMicrotime() + 0.00833;
                 printf("Draw!\n");
             }
 
@@ -231,7 +234,7 @@ int main( int argc, char* args[])
             if (!flag) {
                 num_cycles = (getMicrotime() - lastTime) * 2000000;
             } else {
-                num_cycles = (getMicrotime() - lastTime) * 100;
+                num_cycles = (getMicrotime() - lastTime) * 100000;
             }
             //printf("%f, %f, %d\n", num_cycles, leftover_cycles, numCycles(&state));
             //int num_cycles = 100000;
@@ -280,6 +283,7 @@ int main( int argc, char* args[])
                 }
 
                 //if (cnt >= op_run ) {
+                printf("SP: %02x, %02x, %02x, %02x, %02x, %02x, %02x, %02x\n", state.memory[0x23f4], state.memory[0x23f3], state.memory[0x23f2], state.memory[0x23f1], state.memory[0x23f0], state.memory[0x23ef], state.memory[0x23ee], state.memory[0x23ed]);
                 printf("%ld - %02x%02x%02x - ", cnt+1, state.memory[state.pc], state.memory[state.pc+1], state.memory[state.pc+2]);
                 printf("\tC=%d,P=%d,S=%d,Z=%d\n", state.cc.cy, state.cc.p,
                 state.cc.s, state.cc.z);
