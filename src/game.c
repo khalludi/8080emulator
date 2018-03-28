@@ -72,6 +72,7 @@ bool init() {
     state.memory = (uint8_t *) buffer;
 
     state.int_enable = 1;
+    state.cpu_diag = 0;
     state.sp = 0xf000;
     state.cc.cy = 0;
 
@@ -95,13 +96,18 @@ uint8_t MachineIN(uint8_t port) {
     uint8_t a = 0x00;
     switch(port) {
         case 0:
-        return 0x01;
-        break;
+        {
+            return 0x01;
+            break;
+        }
         case 1:
-        return 0x00;
-        break;
+        {
+            return 0x00;
+            break;
+        }
 
-        case 3: {
+        case 3:
+        {
             uint16_t v = (shift1 << 8) | shift0;
             a = ((v >> (8 - shift_offset)) & 0xff);
             break;
@@ -110,16 +116,20 @@ uint8_t MachineIN(uint8_t port) {
     return a;
 }
 
-void MachineOUT(uint8_t port, uint8_t value) {
+void MachineOUT(uint8_t port) {
     //uint8_t a;
     switch(port) {
         case 2:
-        shift_offset = value & 0x7;
-        break;
+        {
+            shift_offset = state.a & 0x7;
+            break;
+        }
         case 4:
-        shift0 = shift1;
-        shift1 = value;
-        break;
+        {
+            shift0 = shift1;
+            shift1 = state.a;
+            break;
+        }
     }
 }
 
@@ -173,8 +183,9 @@ void GenerateInterrupt(int interrupt) {
     // Push
     state.sp -= 2;
     state.pc -= 1;
-    state.memory[state.sp] = (state.pc & 0xff00) >> 8;
-    state.memory[state.sp+1] = (state.pc & 0xff);
+    state.memory[state.sp] = (state.pc & 0xff);
+    state.memory[state.sp+1] = (state.pc & 0xff00) >> 8;
+
 
     printf("\n%02x\n", state.pc);
 
@@ -247,16 +258,16 @@ int main( int argc, char* args[])
                 unsigned char* opcode = &state.memory[state.pc];
 
                 // First stop point
-                if (state.pc == 0x0ada) {
+                /*if (state.pc == 0x0ada) {
                     state.memory[0x20c0] = 0;
                     flag = 1;
                     num_cycles = 0;
-                }
+                }*/
 
                 // Second stop point
-                if (state.pc == 0x0a9e) {
+                /*if (state.pc == 0x0a9e) {
                     state.memory[0x20c0] = 1;
-                }
+                }*/
 
                 if (*opcode == 0xdb) {
                     uint8_t port = opcode[1];
@@ -265,8 +276,8 @@ int main( int argc, char* args[])
                     //printf("%02x%02x, %02x, HIT! %ld\n", opcode[0], opcode[1], state.a, cnt);
                 }
                 else if(*opcode == 0xd3) {
-                    //uint8_t port = opcode[1];
-                    //MachineOUT(port);
+                    uint8_t port = opcode[1];
+                    MachineOUT(port);
                     state.pc += 2;
                 }
                 else {
@@ -276,20 +287,19 @@ int main( int argc, char* args[])
                 num_cycles = num_cycles - cycles;
                 leftover_cycles = 0.0;
                 //printf("%02x, ", opcode);
-                if (cnt >= 500000) {
+                /*if (cnt >= 2090000) {
                     draw();
                     sleep(5000);
                     //cnt += 1;
-                }
+                }*/
 
                 //if (cnt >= op_run ) {
-                printf("SP: %02x, %02x, %02x, %02x, %02x, %02x, %02x, %02x\n", state.memory[0x23f4], state.memory[0x23f3], state.memory[0x23f2], state.memory[0x23f1], state.memory[0x23f0], state.memory[0x23ef], state.memory[0x23ee], state.memory[0x23ed]);
-                printf("%ld - %02x%02x%02x - ", cnt+1, state.memory[state.pc], state.memory[state.pc+1], state.memory[state.pc+2]);
+                /*printf("%ld - %02x%02x%02x - ", cnt+1, state.memory[state.pc], state.memory[state.pc+1], state.memory[state.pc+2]);
                 printf("\tC=%d,P=%d,S=%d,Z=%d\n", state.cc.cy, state.cc.p,
                 state.cc.s, state.cc.z);
                 printf("\tA $%02x B $%02x C $%02x D $%02x E $%02x H $%02x L $%02x PC %04x SP %04x\n",
                 state.a, state.b, state.c, state.d,
-                state.e, state.h, state.l, state.pc, state.sp);
+                state.e, state.h, state.l, state.pc, state.sp);*/
                 //}
                 cnt += 1;
             }
