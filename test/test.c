@@ -1,26 +1,27 @@
-#include <check.h>
-#include <stdio.h>
 #include <stdlib.h>
-//#include "emu_shell.h"
+#include <stdio.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include "emu_shell.h"
 
 int main() {
-    
-//    State8080 state;
-    
-    char * buffer = "0138c1"; char * pos = buffer;
-    unsigned char val[3];
+
+    State8080* state = malloc(sizeof(State8080));
+
+    // Store hex value into a char *
+    char * buffer = "7a"; char * pos = buffer;
+    unsigned char val[1];
     for(int i = 0; i < sizeof(val); i++) {
         sscanf(pos, "%2hhx", &val[i]);
         pos += 2;
     }
 
-    printf("%2hhx, %2hhx, %2hhx \n", val[0], val[1], val[2]);
-    printf("%2hhx \n", val[1]);
+    state->memory = val;
+    state->sp = 0xf000;
+    state->d = 0x11;
+    Emulate8080Op(state);
 
-//    state.memory = val;
-//    state.d = 0x11;
-//    Emulate8080Op(&state);
-//    Emulate8080Op(&state);
+    free(state);
 
-    return 0;
+    printf("%02x\n", state->l);
 }

@@ -5,15 +5,13 @@
 
 #include <check.h>
 
-#line 1 "diff_test.check"
 #include "emu_shell.h"
 #include <stdlib.h>
 #include <stdio.h>
 
 START_TEST(nop_check_00)
 {
-#line 6
-    State8080* state = malloc(sizeof(State8080));
+    State8080* state = malloc(64001);
 
     // Store hex value into a char *
     char * buffer = "00"; char * pos = buffer;
@@ -22,7 +20,7 @@ START_TEST(nop_check_00)
         sscanf(pos, "%2hhx", &val[i]);
         pos += 2;
     }
-    
+
     state->memory = val;
     state->sp = 0xf000;
     Emulate8080Op(state);
@@ -49,8 +47,7 @@ END_TEST
 
 START_TEST(lxi_b_01)
 {
-#line 6
-    State8080* state = malloc(sizeof(State8080));
+    State8080* state = malloc(64001);
 
     // Store hex value into a char *
     char * buffer = "01abcdef"; char * pos = buffer;
@@ -59,7 +56,7 @@ START_TEST(lxi_b_01)
         sscanf(pos, "%2hhx", &val[i]);
         pos += 2;
     }
-    
+
     state->memory = val;
     state->sp = 0xf000;
     Emulate8080Op(state);
@@ -87,8 +84,7 @@ END_TEST
 
 START_TEST(lxi_d_11)
 {
-#line 6
-    State8080* state = malloc(sizeof(State8080));
+    State8080* state = malloc(64001);
 
     // Store hex value into a char *
     char * buffer = "11abcdef"; char * pos = buffer;
@@ -97,7 +93,7 @@ START_TEST(lxi_d_11)
         sscanf(pos, "%2hhx", &val[i]);
         pos += 2;
     }
-    
+
     state->memory = val;
     state->sp = 0xf000;
     Emulate8080Op(state);
@@ -125,8 +121,7 @@ END_TEST
 
 START_TEST(lxi_h_21)
 {
-#line 6
-    State8080* state = malloc(sizeof(State8080));
+    State8080* state = malloc(64001);
 
     // Store hex value into a char *
     char * buffer = "21abcdef"; char * pos = buffer;
@@ -135,7 +130,7 @@ START_TEST(lxi_h_21)
         sscanf(pos, "%2hhx", &val[i]);
         pos += 2;
     }
-    
+
     state->memory = val;
     state->sp = 0xf000;
     Emulate8080Op(state);
@@ -163,8 +158,7 @@ END_TEST
 
 START_TEST(mov_d_to_a_7a) // 0x7a
 {
-#line 20
-    State8080* state = malloc(sizeof(State8080));
+    State8080* state = malloc(64001);
 
     // Store hex value into a char *
     char * buffer = "7a"; char * pos = buffer;
@@ -201,8 +195,7 @@ END_TEST
 
 START_TEST(mov_e_to_a_7b) // 0x7b
 {
-#line 20
-    State8080* state = malloc(sizeof(State8080));
+    State8080* state = malloc(64001);
 
     // Store hex value into a char *
     char * buffer = "7b"; char * pos = buffer;
@@ -237,10 +230,9 @@ START_TEST(mov_e_to_a_7b) // 0x7b
 }
 END_TEST
 
-START_TEST(mov_h_to_a_7c) // 0x7b
+START_TEST(mov_h_to_a_7c) // 0x7c
 {
-#line 20
-    State8080* state = malloc(sizeof(State8080));
+    State8080* state = malloc(64001);
 
     // Store hex value into a char *
     char * buffer = "7c"; char * pos = buffer;
@@ -270,7 +262,7 @@ START_TEST(mov_h_to_a_7c) // 0x7b
     ck_assert_uint_eq(state->cc.cy, 0x00);
     ck_assert_uint_eq(state->cc.ac, 0x00);
     ck_assert_uint_eq(state->cc.pad, 0x00);
-    
+
     free(state);
 }
 END_TEST

@@ -1038,12 +1038,42 @@ char Emulate8080Op(State8080* state)
             cycles = 7;
             break;
         }
-        case 0x78: state->a = state->b; cycles = 5; break;
-        case 0x79: state->a = state->c; cycles = 5; break;
-        case 0x7a: state->a = state->d; cycles = 5; break;      // MOV A,D
-        case 0x7b: state->a = state->e; cycles = 5; break;      // MOV A,E
-        case 0x7c: state->a = state->h; cycles = 5; break;      // MOV A,H
-        case 0x7d: state->a = state->l; cycles = 5; break;
+        case 0x78:
+        {
+            state->a = state->b;
+            cycles = 5;
+            break;
+        }
+        case 0x79:
+        {
+            state->a = state->c;
+            cycles = 5;
+            break;
+        }
+        case 0x7a:                          // MOV A,D
+        {
+            state->a = state->d;
+            cycles = 5;
+            break;
+        }
+        case 0x7b:                          // MOV A,E
+        {
+            state->a = state->e;
+            cycles = 5;
+            break;
+        }
+        case 0x7c:                          // MOV A,H
+        {
+            state->a = state->h;
+            cycles = 5;
+            break;
+        }
+        case 0x7d:
+        {
+            state->a = state->l;
+            cycles = 5;
+            break;
+        }
         case 0x7e:                          // MOV A,M
         {
             uint16_t offset = ((uint16_t) state->h << 8) | state->l;
@@ -1051,7 +1081,11 @@ char Emulate8080Op(State8080* state)
             cycles = 7;
             break;
         }
-        case 0x7f: state->a = state->a; break;
+        case 0x7f:
+        {
+            state->a = state->a;
+            break;
+        }
         /*******************   ADD   ***********************/
         case 0x80:
         {
@@ -1795,7 +1829,6 @@ char Emulate8080Op(State8080* state)
             state->cc.cy = ~(answer > 0xff);
             state->cc.p = Parity(answer & 0xff);
             state->cc.ac = ((state->a) + ~(state->l & 0xf) + 1 > 0xf);
-            cycles = 4;
             break;
         }
         case 0xbe:
@@ -1807,7 +1840,7 @@ char Emulate8080Op(State8080* state)
             state->cc.cy = ~(answer > 0xff);
             state->cc.p = Parity(answer & 0xff);
             state->cc.ac = ((state->a) + ~(state->memory[offset] & 0xf) + 1 > 0xf);
-            cycles = 7;
+            printf("%04x, %02x\n", offset, state->memory[offset]);
             break;
         }
         case 0xbf:

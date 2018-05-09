@@ -170,7 +170,7 @@ void draw() {
     SDL_Palette* palette = SDL_AllocPalette(2);
     SDL_Color white = {255,255,255,0};
     SDL_Color black = {0,0,0,0};
-    SDL_Color colors_array[2] = {black, white};
+    SDL_Color colors_array[4] = {black, white};
     palette->colors = (SDL_Color *)&colors_array;
     SDL_PixelFormat pixel_format = {SDL_PIXELFORMAT_INDEX1LSB, palette, 8, 1, {0, 0}, 0x60, 0x18, 0x04, 0x0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL};
     surf->format = &pixel_format;
@@ -245,7 +245,7 @@ int main( int argc, char* args[])
             if (!flag) {
                 num_cycles = (getMicrotime() - lastTime) * 2000000;
             } else {
-                num_cycles = (getMicrotime() - lastTime) * 100000;
+                num_cycles = (getMicrotime() - lastTime) * 2000000;
             }
             //printf("%f, %f, %d\n", num_cycles, leftover_cycles, numCycles(&state));
             //int num_cycles = 100000;
