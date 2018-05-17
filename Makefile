@@ -8,13 +8,13 @@ OBJECTS=$(SOURCES:.c=.o)
 EXECUTABLE=emulator
 
 # Uncomment to run cpu_diag test
-# TEST_SOURCES=./test/cpu_test.c
-# TEST_OBJECTS=$(filter-out ./src/game.o,$(OBJECTS))
-# TEST_OBJECTS += ./test/cpu_test.o
-
-TEST_SOURCES=./test/emu_shell_test.c
+TEST_SOURCES=./test/cpu_test.c
 TEST_OBJECTS=$(filter-out ./src/game.o,$(OBJECTS))
-TEST_OBJECTS += ./test/emu_shell_test.o
+TEST_OBJECTS += ./test/cpu_test.o
+
+# TEST_SOURCES=./test/emu_shell_test.c
+# TEST_OBJECTS=$(filter-out ./src/game.o,$(OBJECTS))
+# TEST_OBJECTS += ./test/emu_shell_test.o
 
 
 all: emulator

@@ -156,6 +156,80 @@ START_TEST(lxi_h_21)
 }
 END_TEST
 
+START_TEST(mov_b_to_a_78) // 0x7a
+{
+    State8080* state = malloc(64001);
+
+    // Store hex value into a char *
+    char * buffer = "78"; char * pos = buffer;
+    unsigned char val[1];
+    for(int i = 0; i < sizeof(val); i++) {
+        sscanf(pos, "%2hhx", &val[i]);
+        pos += 2;
+    }
+
+    state->memory = val;
+    state->sp = 0xf000;
+    state->b = 0x11;
+    Emulate8080Op(state);
+
+    ck_assert_uint_eq(state->a, 0x11);
+    ck_assert_uint_eq(state->b, 0x11);
+    ck_assert_uint_eq(state->c, 0x00);
+    ck_assert_uint_eq(state->d, 0x00);
+    ck_assert_uint_eq(state->e, 0x00);
+    ck_assert_uint_eq(state->h, 0x00);
+    ck_assert_uint_eq(state->l, 0x00);
+    ck_assert_uint_eq(state->sp, 0xf000);
+    ck_assert_uint_eq(state->pc, 0x01);
+    ck_assert_uint_eq(state->cc.z, 0x00);
+    ck_assert_uint_eq(state->cc.s, 0x00);
+    ck_assert_uint_eq(state->cc.p, 0x00);
+    ck_assert_uint_eq(state->cc.cy, 0x00);
+    ck_assert_uint_eq(state->cc.ac, 0x00);
+    ck_assert_uint_eq(state->cc.pad, 0x00);
+
+    free(state);
+}
+END_TEST
+
+START_TEST(mov_c_to_a_79) // 0x7a
+{
+    State8080* state = malloc(64001);
+
+    // Store hex value into a char *
+    char * buffer = "79"; char * pos = buffer;
+    unsigned char val[1];
+    for(int i = 0; i < sizeof(val); i++) {
+        sscanf(pos, "%2hhx", &val[i]);
+        pos += 2;
+    }
+
+    state->memory = val;
+    state->sp = 0xf000;
+    state->c = 0x11;
+    Emulate8080Op(state);
+
+    ck_assert_uint_eq(state->a, 0x11);
+    ck_assert_uint_eq(state->b, 0x00);
+    ck_assert_uint_eq(state->c, 0x11);
+    ck_assert_uint_eq(state->d, 0x00);
+    ck_assert_uint_eq(state->e, 0x00);
+    ck_assert_uint_eq(state->h, 0x00);
+    ck_assert_uint_eq(state->l, 0x00);
+    ck_assert_uint_eq(state->sp, 0xf000);
+    ck_assert_uint_eq(state->pc, 0x01);
+    ck_assert_uint_eq(state->cc.z, 0x00);
+    ck_assert_uint_eq(state->cc.s, 0x00);
+    ck_assert_uint_eq(state->cc.p, 0x00);
+    ck_assert_uint_eq(state->cc.cy, 0x00);
+    ck_assert_uint_eq(state->cc.ac, 0x00);
+    ck_assert_uint_eq(state->cc.pad, 0x00);
+
+    free(state);
+}
+END_TEST
+
 START_TEST(mov_d_to_a_7a) // 0x7a
 {
     State8080* state = malloc(64001);
@@ -267,19 +341,258 @@ START_TEST(mov_h_to_a_7c) // 0x7c
 }
 END_TEST
 
+START_TEST(mov_l_to_a_7d) // 0x7c
+{
+    State8080* state = malloc(64001);
+
+    // Store hex value into a char *
+    char * buffer = "7d"; char * pos = buffer;
+    unsigned char val[1];
+    for(int i = 0; i < sizeof(val); i++) {
+        sscanf(pos, "%2hhx", &val[i]);
+        pos += 2;
+    }
+
+    state->memory = val;
+    state->sp = 0xf000;
+    state->l = 0x11;
+    Emulate8080Op(state);
+
+    ck_assert_uint_eq(state->a, 0x11);
+    ck_assert_uint_eq(state->b, 0x00);
+    ck_assert_uint_eq(state->c, 0x00);
+    ck_assert_uint_eq(state->d, 0x00);
+    ck_assert_uint_eq(state->e, 0x00);
+    ck_assert_uint_eq(state->h, 0x00);
+    ck_assert_uint_eq(state->l, 0x11);
+    ck_assert_uint_eq(state->sp, 0xf000);
+    ck_assert_uint_eq(state->pc, 0x01);
+    ck_assert_uint_eq(state->cc.z, 0x00);
+    ck_assert_uint_eq(state->cc.s, 0x00);
+    ck_assert_uint_eq(state->cc.p, 0x00);
+    ck_assert_uint_eq(state->cc.cy, 0x00);
+    ck_assert_uint_eq(state->cc.ac, 0x00);
+    ck_assert_uint_eq(state->cc.pad, 0x00);
+
+    free(state);
+}
+END_TEST
+
+START_TEST(mov_a_to_a_7f)
+{
+    State8080* state = malloc(64001);
+
+    // Store hex value into a char *
+    char * buffer = "7f"; char * pos = buffer;
+    unsigned char val[1];
+    for(int i = 0; i < sizeof(val); i++) {
+        sscanf(pos, "%2hhx", &val[i]);
+        pos += 2;
+    }
+
+    state->memory = val;
+    state->sp = 0xf000;
+    state->a = 0x11;
+    Emulate8080Op(state);
+
+    ck_assert_uint_eq(state->a, 0x11);
+    ck_assert_uint_eq(state->b, 0x00);
+    ck_assert_uint_eq(state->c, 0x00);
+    ck_assert_uint_eq(state->d, 0x00);
+    ck_assert_uint_eq(state->e, 0x00);
+    ck_assert_uint_eq(state->h, 0x00);
+    ck_assert_uint_eq(state->l, 0x00);
+    ck_assert_uint_eq(state->sp, 0xf000);
+    ck_assert_uint_eq(state->pc, 0x01);
+    ck_assert_uint_eq(state->cc.z, 0x00);
+    ck_assert_uint_eq(state->cc.s, 0x00);
+    ck_assert_uint_eq(state->cc.p, 0x00);
+    ck_assert_uint_eq(state->cc.cy, 0x00);
+    ck_assert_uint_eq(state->cc.ac, 0x00);
+    ck_assert_uint_eq(state->cc.pad, 0x00);
+
+    free(state);
+}
+END_TEST
+
+START_TEST(mov_b_to_m_70)
+{
+    State8080* state = malloc(64001);
+
+    // Store hex value into a char *
+    char * buffer = "70"; char * pos = buffer;
+    unsigned char val[4665];
+    for(int i = 0; i < sizeof(val); i++) {
+        sscanf(pos, "%2hhx", &val[i]);
+        pos += 2;
+    }
+
+    state->memory = val;
+    state->sp = 0xf000;
+    state->b = 0x56;
+    state->l = 0x34;
+    state->h = 0x12;
+    Emulate8080Op(state);
+
+    ck_assert_uint_eq(state->a, 0x00);
+    ck_assert_uint_eq(state->b, 0x56);
+    ck_assert_uint_eq(state->c, 0x00);
+    ck_assert_uint_eq(state->d, 0x00);
+    ck_assert_uint_eq(state->e, 0x00);
+    ck_assert_uint_eq(state->h, 0x12);
+    ck_assert_uint_eq(state->l, 0x34);
+    ck_assert_uint_eq(state->sp, 0xf000);
+    ck_assert_uint_eq(state->pc, 0x01);
+    ck_assert_uint_eq(state->cc.z, 0x00);
+    ck_assert_uint_eq(state->cc.s, 0x00);
+    ck_assert_uint_eq(state->cc.p, 0x00);
+    ck_assert_uint_eq(state->cc.cy, 0x00);
+    ck_assert_uint_eq(state->cc.ac, 0x00);
+    ck_assert_uint_eq(state->cc.pad, 0x00);
+    ck_assert_uint_eq(state->memory[0x1234], 0x56);
+
+    free(state);
+}
+END_TEST
+
+START_TEST(stax_b_02)
+{
+    State8080* state = malloc(64001);
+
+    // Store hex value into a char *
+    char * buffer = "02"; char * pos = buffer;
+    unsigned char val[4665];
+    for(int i = 0; i < 2; i++) {
+        sscanf(pos, "%2hhx", &val[i]);
+        pos += 2;
+    }
+
+    state->memory = val;
+    state->sp = 0xf000;
+    state->a = 0x93;
+    state->c = 0x42;
+    state->b = 0x10;
+    Emulate8080Op(state);
+
+    ck_assert_uint_eq(state->a, 0x93);
+    ck_assert_uint_eq(state->b, 0x10);
+    ck_assert_uint_eq(state->c, 0x42);
+    ck_assert_uint_eq(state->d, 0x00);
+    ck_assert_uint_eq(state->e, 0x00);
+    ck_assert_uint_eq(state->h, 0x00);
+    ck_assert_uint_eq(state->l, 0x00);
+    ck_assert_uint_eq(state->sp, 0xf000);
+    ck_assert_uint_eq(state->pc, 0x01);
+    ck_assert_uint_eq(state->cc.z, 0x00);
+    ck_assert_uint_eq(state->cc.s, 0x00);
+    ck_assert_uint_eq(state->cc.p, 0x00);
+    ck_assert_uint_eq(state->cc.cy, 0x00);
+    ck_assert_uint_eq(state->cc.ac, 0x00);
+    ck_assert_uint_eq(state->cc.pad, 0x00);
+    ck_assert_uint_eq(state->memory[0x1042], 0x93);
+
+    free(state);
+}
+END_TEST
+
+START_TEST(stax_d_12)
+{
+    State8080* state = malloc(64001);
+
+    // Store hex value into a char *
+    char * buffer = "12"; char * pos = buffer;
+    unsigned char val[4665];
+    for(int i = 0; i < 2; i++) {
+        sscanf(pos, "%2hhx", &val[i]);
+        pos += 2;
+    }
+
+    state->memory = val;
+    state->sp = 0xf000;
+    state->a = 0x76;
+    state->e = 0x98;
+    state->d = 0x11;
+    Emulate8080Op(state);
+
+    ck_assert_uint_eq(state->a, 0x76);
+    ck_assert_uint_eq(state->b, 0x00);
+    ck_assert_uint_eq(state->c, 0x00);
+    ck_assert_uint_eq(state->d, 0x11);
+    ck_assert_uint_eq(state->e, 0x98);
+    ck_assert_uint_eq(state->h, 0x00);
+    ck_assert_uint_eq(state->l, 0x00);
+    ck_assert_uint_eq(state->sp, 0xf000);
+    ck_assert_uint_eq(state->pc, 0x01);
+    ck_assert_uint_eq(state->cc.z, 0x00);
+    ck_assert_uint_eq(state->cc.s, 0x00);
+    ck_assert_uint_eq(state->cc.p, 0x00);
+    ck_assert_uint_eq(state->cc.cy, 0x00);
+    ck_assert_uint_eq(state->cc.ac, 0x00);
+    ck_assert_uint_eq(state->cc.pad, 0x00);
+    ck_assert_uint_eq(state->memory[0x1198], 0x76);
+
+    free(state);
+}
+END_TEST
+
+START_TEST(stax_adr_32)
+{
+    State8080* state = malloc(64001);
+
+    //  Store hex value into a char *
+    char * buffer = "324313"; char * pos = buffer;
+    unsigned char val[5000];
+    for(int i = 0; i < 3; i++) {
+        sscanf(pos, "%2hhx", &val[i]);
+        pos += 2;
+    }
+
+    state->memory = (uint8_t *) val;
+    state->sp = 0xf000;
+    state->a = 0x30;
+    Emulate8080Op(state);
+
+    ck_assert_uint_eq(state->a, 0x30);
+    ck_assert_uint_eq(state->b, 0x00);
+    ck_assert_uint_eq(state->c, 0x00);
+    ck_assert_uint_eq(state->d, 0x00);
+    ck_assert_uint_eq(state->e, 0x00);
+    ck_assert_uint_eq(state->h, 0x00);
+    ck_assert_uint_eq(state->l, 0x00);
+    ck_assert_uint_eq(state->sp, 0xf000);
+    ck_assert_uint_eq(state->pc, 0x03);
+    ck_assert_uint_eq(state->cc.z, 0x00);
+    ck_assert_uint_eq(state->cc.s, 0x00);
+    ck_assert_uint_eq(state->cc.p, 0x00);
+    ck_assert_uint_eq(state->cc.cy, 0x00);
+    ck_assert_uint_eq(state->cc.ac, 0x00);
+    ck_assert_uint_eq(state->cc.pad, 0x00);
+    ck_assert_uint_eq(state->memory[0x1343], 0x30);
+
+    free(state);
+}
+END_TEST
+
+
 int main(void)
 {
     Suite *s1 = suite_create("Core");
     TCase *tc1_1 = tcase_create("MOV A,X");
     TCase *tc1_2 = tcase_create("NOP");
     TCase *tc1_3 = tcase_create("LXI X,D16");
+    TCase *tc1_4 = tcase_create("MOV M,X");
+    TCase *tc1_5 = tcase_create("STAX X");
     SRunner *sr = srunner_create(s1);
     int nf;
 
     suite_add_tcase(s1, tc1_1);
+    tcase_add_test(tc1_1, mov_b_to_a_78);
+    tcase_add_test(tc1_1, mov_c_to_a_79);
     tcase_add_test(tc1_1, mov_d_to_a_7a);
     tcase_add_test(tc1_1, mov_e_to_a_7b);
     tcase_add_test(tc1_1, mov_h_to_a_7c);
+    tcase_add_test(tc1_1, mov_l_to_a_7d);
+    tcase_add_test(tc1_1, mov_a_to_a_7f);
 
     suite_add_tcase(s1, tc1_2);
     tcase_add_test(tc1_2, nop_check_00);
@@ -288,6 +601,14 @@ int main(void)
     tcase_add_test(tc1_3, lxi_b_01);
     tcase_add_test(tc1_3, lxi_d_11);
     tcase_add_test(tc1_3, lxi_h_21);
+
+    suite_add_tcase(s1, tc1_4);
+    tcase_add_test(tc1_1, mov_b_to_m_70);
+
+    suite_add_tcase(s1, tc1_5);
+    tcase_add_test(tc1_5, stax_b_02);
+    tcase_add_test(tc1_5, stax_d_12);
+    tcase_add_test(tc1_5, stax_adr_32);
 
     srunner_run_all(sr, CK_ENV);
     nf = srunner_ntests_failed(sr);

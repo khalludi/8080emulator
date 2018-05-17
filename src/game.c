@@ -187,7 +187,7 @@ void GenerateInterrupt(int interrupt) {
     state.memory[state.sp+1] = (state.pc & 0xff00) >> 8;
 
 
-    printf("\n%02x\n", state.pc);
+    //printf("\n%02x\n", state.pc);
 
     state.pc = 8 * interrupt - 1;
     state.int_enable = 0;
@@ -213,6 +213,7 @@ int main( int argc, char* args[])
         int whichInterrupt;
         long cnt = 0;
         int flag = 0;
+        uint16_t tmp_hex = (state.memory[0x2079] << 8) | state.memory[0x2080];
 
         // While application is running
         while (!quit) {
@@ -293,13 +294,18 @@ int main( int argc, char* args[])
                     //cnt += 1;
                 }*/
 
+                if (tmp_hex != ((state.memory[0x2079] << 8) | state.memory[0x2080])) {
+                    printf("\nMEM 2079 CHANGED from %04x to %04x\n", tmp_hex, (state.memory[0x2079] << 8) | state.memory[0x2080]);
+                    tmp_hex = (state.memory[0x2079] << 8) | state.memory[0x2080];
+                }
+
                 //if (cnt >= op_run ) {
-                /*printf("%ld - %02x%02x%02x - ", cnt+1, state.memory[state.pc], state.memory[state.pc+1], state.memory[state.pc+2]);
+                printf("%ld - %02x%02x%02x - ", cnt+1, state.memory[state.pc], state.memory[state.pc+1], state.memory[state.pc+2]);
                 printf("\tC=%d,P=%d,S=%d,Z=%d\n", state.cc.cy, state.cc.p,
                 state.cc.s, state.cc.z);
                 printf("\tA $%02x B $%02x C $%02x D $%02x E $%02x H $%02x L $%02x PC %04x SP %04x\n",
                 state.a, state.b, state.c, state.d,
-                state.e, state.h, state.l, state.pc, state.sp);*/
+                state.e, state.h, state.l, state.pc, state.sp);
                 //}
                 cnt += 1;
             }

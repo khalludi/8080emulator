@@ -33,7 +33,7 @@ int main() {
 
     init();
 
-    //Fix the first instruction to be JMP 0x100
+    //Fix the first instruction to be JMP 0x100 
     state.memory[0]=0xc3;
     state.memory[1]=0;
     state.memory[2]=0x01;

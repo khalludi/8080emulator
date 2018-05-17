@@ -816,9 +816,11 @@ char Emulate8080Op(State8080* state)
             break;
         }
         case 0x33:                          // INX SP
-        state->sp = (state->sp + 1) & 0xFFFF;
-        cycles = 5;
-        break;
+        {
+            state->sp = (state->sp + 1) & 0xFFFF;
+            cycles = 5;
+            break;
+        }
         case 0x34:                          // INR M
         {
             uint16_t offset = ((uint16_t) state->h << 8) | (state->l);
@@ -1837,7 +1839,7 @@ char Emulate8080Op(State8080* state)
             uint16_t answer = ((uint16_t) state->a) + ~(state->memory[offset]) + 1;
             state->cc.z = ((answer & 0x00ff) == 0);
             state->cc.s = ((answer & 0x80) != 0);
-            state->cc.cy = ~(answer > 0xff);
+            state->cc.cy = (answer > 0xff);
             state->cc.p = Parity(answer & 0xff);
             state->cc.ac = ((state->a) + ~(state->memory[offset] & 0xf) + 1 > 0xf);
             printf("%04x, %02x\n", offset, state->memory[offset]);
@@ -2171,7 +2173,7 @@ char Emulate8080Op(State8080* state)
         }
         case 0xe3:                          // XTHL
         {
-            uint16_t ans = ((state->h << 8) | state->l) - 1;
+            uint16_t ans = ((state->h << 8) | state->l) - 1; // remove -1 otherwise error in cpu_diag
             state->l = state->memory[state->sp];
             state->h = state->memory[state->sp+1];
             state->memory[state->sp] = ans & 0xff;
