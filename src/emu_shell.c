@@ -1842,7 +1842,7 @@ char Emulate8080Op(State8080* state)
             state->cc.cy = (answer > 0xff);
             state->cc.p = Parity(answer & 0xff);
             state->cc.ac = ((state->a) + ~(state->memory[offset] & 0xf) + 1 > 0xf);
-            printf("%04x, %02x\n", offset, state->memory[offset]);
+            //printf("%04x, %02x\n", offset, state->memory[offset]);
             break;
         }
         case 0xbf:

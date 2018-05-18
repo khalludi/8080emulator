@@ -3,8 +3,9 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <sys/time.h>
-#include <SDL2/SDL_pixels.h>
-#include <SDL2/SDL.h>
+#include "SDL_mixer.h"
+#include "SDL_pixels.h"
+#include "SDL.h"
 #include <unistd.h>
 #include "emu_shell.h"
 
@@ -22,12 +23,27 @@ State8080 state;
 uint8_t shift0 = 0;
 uint8_t shift1 = 0;
 uint8_t shift_offset = 0;
+uint8_t in_port1 = 0x00;
+uint8_t last_out_port3 = 0x00;
+uint8_t last_out_port5 = 0x00;
+uint8_t out_port5 = 0x00;
 long len_of_file = 0;
 
 // The window
 SDL_Window* gWindow = NULL;
-int SCREEN_WIDTH = 224;
-int SCREEN_HEIGHT = 256;
+int SCREEN_WIDTH = 224 * 3;
+int SCREEN_HEIGHT = 256 * 3;
+
+// Sound Effects
+Mix_Chunk *gPlayerExplosion = NULL;
+Mix_Chunk *gFastInvader1 = NULL;
+Mix_Chunk *gFastInvader2 = NULL;
+Mix_Chunk *gFastInvader3 = NULL;
+Mix_Chunk *gFastInvader4 = NULL;
+Mix_Chunk *gInvaderExplosion = NULL;
+Mix_Chunk *gPlayerShot = NULL;
+Mix_Chunk *gUfoHighPitch = NULL;
+Mix_Chunk *gUfoLowPitch = NULL;
 
 // The surface of window
 SDL_Surface* gScreenSurface = NULL;
@@ -57,6 +73,78 @@ bool init() {
         }
     }
 
+    //Initialize SDL_mixer
+    if( Mix_OpenAudio( 44100, MIX_DEFAULT_FORMAT, 2, 2048 ) < 0 )
+    {
+        printf( "SDL_mixer could not initialize! SDL_mixer Error: %s\n", Mix_GetError() );
+        success = false;
+    }
+
+    //Load sound effects
+    gPlayerExplosion = Mix_LoadWAV( "res/sounds/explosion.wav" );
+    if( gPlayerExplosion == NULL )
+    {
+        printf( "Failed to load gPlayerExplosion sound effect! SDL_mixer Error: %s\n", Mix_GetError() );
+        success = false;
+    }
+
+    gFastInvader1 = Mix_LoadWAV( "res/sounds/fastinvader1.wav" );
+    if( gFastInvader1 == NULL )
+    {
+        printf( "Failed to load gFastInvader1 sound effect! SDL_mixer Error: %s\n", Mix_GetError() );
+        success = false;
+    }
+
+    gFastInvader2 = Mix_LoadWAV( "res/sounds/fastinvader2.wav" );
+    if( gFastInvader2 == NULL )
+    {
+        printf( "Failed to load gFastInvader2 sound effect! SDL_mixer Error: %s\n", Mix_GetError() );
+        success = false;
+    }
+
+    gFastInvader3 = Mix_LoadWAV( "res/sounds/fastinvader3.wav" );
+    if( gFastInvader3 == NULL )
+    {
+        printf( "Failed to load gFastInvader3 sound effect! SDL_mixer Error: %s\n", Mix_GetError() );
+        success = false;
+    }
+
+    gFastInvader4 = Mix_LoadWAV( "res/sounds/fastinvader4.wav" );
+    if( gFastInvader4 == NULL )
+    {
+        printf( "Failed to load gFastInvader4 sound effect! SDL_mixer Error: %s\n", Mix_GetError() );
+        success = false;
+    }
+
+    gInvaderExplosion = Mix_LoadWAV( "res/sounds/invaderkilled.wav" );
+    if( gInvaderExplosion == NULL )
+    {
+        printf( "Failed to load gInvaderExplosion sound effect! SDL_mixer Error: %s\n", Mix_GetError() );
+        success = false;
+    }
+
+    gPlayerShot = Mix_LoadWAV( "res/sounds/shoot.wav" );
+    if( gPlayerShot == NULL )
+    {
+        printf( "Failed to load gPlayerShot sound effect! SDL_mixer Error: %s\n", Mix_GetError() );
+        success = false;
+    }
+
+    gUfoHighPitch = Mix_LoadWAV( "res/sounds/ufo_highpitch.wav" );
+    if( gUfoHighPitch == NULL )
+    {
+        printf( "Failed to load gUfoHighPitch sound effect! SDL_mixer Error: %s\n", Mix_GetError() );
+        success = false;
+    }
+
+    gUfoLowPitch = Mix_LoadWAV( "res/sounds/ufo_lowpitch.wav" );
+    if( gUfoLowPitch == NULL )
+    {
+        printf( "Failed to load gUfoLowPitch sound effect! SDL_mixer Error: %s\n", Mix_GetError() );
+        success = false;
+    }
+
+
     // Initialize State8080
     // Load argument into memory
     FILE *fileptr = fopen("./res/invaders","rb");
@@ -84,11 +172,32 @@ void closeMedia() {
     SDL_FreeSurface(gImage);
     gImage = NULL;
 
+    //Free the sound effects
+    Mix_FreeChunk( gPlayerExplosion );
+    Mix_FreeChunk( gInvaderExplosion );
+    Mix_FreeChunk( gPlayerShot );
+    Mix_FreeChunk( gFastInvader1 );
+    Mix_FreeChunk( gFastInvader2 );
+    Mix_FreeChunk( gFastInvader3 );
+    Mix_FreeChunk( gFastInvader4 );
+    Mix_FreeChunk( gUfoHighPitch );
+    Mix_FreeChunk( gUfoLowPitch );
+    gPlayerExplosion = NULL;
+    gFastInvader1 = NULL;
+    gFastInvader2 = NULL;
+    gFastInvader3 = NULL;
+    gFastInvader4 = NULL;
+    gInvaderExplosion = NULL;
+    gPlayerShot = NULL;
+    gUfoHighPitch = NULL;
+    gUfoLowPitch = NULL;
+
     // Destroy Window
     SDL_DestroyWindow(gWindow);
     gWindow = NULL;
 
     // Quit SDL subsystem
+    Mix_Quit();
     SDL_Quit();
 }
 
@@ -102,7 +211,7 @@ uint8_t MachineIN(uint8_t port) {
         }
         case 1:
         {
-            return 0x00;
+            return in_port1;
             break;
         }
 
@@ -124,10 +233,56 @@ void MachineOUT(uint8_t port) {
             shift_offset = state.a & 0x7;
             break;
         }
+        case 3:
+        {
+            // 2094 state of port 3
+            uint8_t out_port3 = state.memory[0x2094];
+            if (out_port3 != last_out_port3) {
+                if ((out_port3 & 0x02) >> 1 == 1 && (last_out_port3 & 0x02) >> 1 == 0) {
+                    Mix_PlayChannel( -1, gPlayerShot, 0 );
+                    // printf("Port change from %02x to %02x\n", last_out_port3, out_port3);
+                }
+                if ((out_port3 & 0x04) >> 2 == 1 && (last_out_port3 & 0x04) >> 2 == 0) {
+                    Mix_PlayChannel( -1, gPlayerExplosion, 0 );
+                }
+                if ((out_port3 & 0x08) >> 3 == 1 && (last_out_port3 & 0x08) >> 3 == 0) {
+                    Mix_PlayChannel( -1, gInvaderExplosion, 0 );
+                }
+                //if ((out_port3 & 0x8) && !(last_out_port3 & 0x8))
+                last_out_port3 = out_port3;
+            }
+            break;
+        }
         case 4:
         {
             shift0 = shift1;
             shift1 = state.a;
+            break;
+        }
+        case 5:
+        {
+            // 2098 state of port 5
+            uint8_t out_port5 = state.memory[0x2098];
+            if (out_port5 != last_out_port5) {
+                if ((out_port5 & 0x01) == 1 && (last_out_port5 & 0x01) == 0) {
+                    Mix_PlayChannel( -1, gFastInvader1, 0 );
+                    // printf("Port change from %02x to %02x\n", last_out_port3, out_port3);
+                }
+                if ((out_port5 & 0x02) >> 1 == 1 && (last_out_port5 & 0x02) >> 1 == 0) {
+                    Mix_PlayChannel( -1, gFastInvader2, 0 );
+                }
+                if ((out_port5 & 0x04) >> 2 == 1 && (last_out_port5 & 0x04) >> 2 == 0) {
+                    Mix_PlayChannel( -1, gFastInvader3, 0 );
+                }
+                if ((out_port5 & 0x08) >> 3 == 1 && (last_out_port5 & 0x08) >> 3 == 0) {
+                    Mix_PlayChannel( -1, gFastInvader4, 0 );
+                }
+                if ((out_port5 & 0x10) >> 4 == 1 && (last_out_port5 & 0x10) >> 4 == 0) {
+                    Mix_PlayChannel( -1, gUfoHighPitch, 0 );
+                }
+                //if ((out_port3 & 0x8) && !(last_out_port3 & 0x8))
+                last_out_port5 = out_port5;
+            }
             break;
         }
     }
@@ -175,7 +330,17 @@ void draw() {
     SDL_PixelFormat pixel_format = {SDL_PIXELFORMAT_INDEX1LSB, palette, 8, 1, {0, 0}, 0x60, 0x18, 0x04, 0x0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL};
     surf->format = &pixel_format;
 
-    SDL_BlitSurface(surf, NULL, SDL_GetWindowSurface(gWindow), NULL);
+    SDL_Surface* optimizedSurface = SDL_ConvertSurface( surf, gScreenSurface->format, 0 );
+
+    //Apply the image stretched
+	SDL_Rect stretchRect;
+	stretchRect.x = 0;
+	stretchRect.y = 0;
+	stretchRect.w = SCREEN_WIDTH;
+	stretchRect.h = SCREEN_HEIGHT;
+	SDL_BlitScaled( optimizedSurface, NULL, gScreenSurface, &stretchRect );
+
+    //SDL_BlitSurface(surf, NULL, SDL_GetWindowSurface(gWindow), NULL);
     SDL_UpdateWindowSurface(gWindow);
 }
 
@@ -185,7 +350,6 @@ void GenerateInterrupt(int interrupt) {
     state.pc -= 1;
     state.memory[state.sp] = (state.pc & 0xff);
     state.memory[state.sp+1] = (state.pc & 0xff00) >> 8;
-
 
     //printf("\n%02x\n", state.pc);
 
@@ -205,7 +369,7 @@ int main( int argc, char* args[])
         // Main loop flag
         int quit = 0;
         // Event handler
-        // SDL_Event e;
+        SDL_Event e;
 
         double lastTime = 0;
         double leftover_cycles = 0;
@@ -213,7 +377,7 @@ int main( int argc, char* args[])
         int whichInterrupt;
         long cnt = 0;
         int flag = 0;
-        uint16_t tmp_hex = (state.memory[0x2079] << 8) | state.memory[0x2080];
+        //uint16_t tmp_hex = (state.memory[0x2079] << 8) | state.memory[0x2080];
 
         // While application is running
         while (!quit) {
@@ -239,7 +403,7 @@ int main( int argc, char* args[])
                 }
                 draw();
                 nextInterrupt = getMicrotime() + 0.00833;
-                printf("Draw!\n");
+                //printf("Draw!\n");
             }
 
             double num_cycles = 0;
@@ -294,18 +458,18 @@ int main( int argc, char* args[])
                     //cnt += 1;
                 }*/
 
-                if (tmp_hex != ((state.memory[0x2079] << 8) | state.memory[0x2080])) {
+                /*if (tmp_hex != ((state.memory[0x2079] << 8) | state.memory[0x2080])) {
                     printf("\nMEM 2079 CHANGED from %04x to %04x\n", tmp_hex, (state.memory[0x2079] << 8) | state.memory[0x2080]);
                     tmp_hex = (state.memory[0x2079] << 8) | state.memory[0x2080];
-                }
+                }*/
 
                 //if (cnt >= op_run ) {
-                printf("%ld - %02x%02x%02x - ", cnt+1, state.memory[state.pc], state.memory[state.pc+1], state.memory[state.pc+2]);
-                printf("\tC=%d,P=%d,S=%d,Z=%d\n", state.cc.cy, state.cc.p,
-                state.cc.s, state.cc.z);
-                printf("\tA $%02x B $%02x C $%02x D $%02x E $%02x H $%02x L $%02x PC %04x SP %04x\n",
-                state.a, state.b, state.c, state.d,
-                state.e, state.h, state.l, state.pc, state.sp);
+                // printf("%ld - %02x%02x%02x - ", cnt+1, state.memory[state.pc], state.memory[state.pc+1], state.memory[state.pc+2]);
+                // printf("\tC=%d,P=%d,S=%d,Z=%d\n", state.cc.cy, state.cc.p,
+                // state.cc.s, state.cc.z);
+                // printf("\tA $%02x B $%02x C $%02x D $%02x E $%02x H $%02x L $%02x PC %04x SP %04x\n",
+                // state.a, state.b, state.c, state.d,
+                // state.e, state.h, state.l, state.pc, state.sp);
                 //}
                 cnt += 1;
             }
@@ -313,16 +477,44 @@ int main( int argc, char* args[])
                 leftover_cycles += num_cycles;
             lastTime = getMicrotime();
 
-            /*
+
             // Handle events on queue
             while( SDL_PollEvent( &e ) != 0 ) {
-            // User requests quit
-            if (e.type == SDL_QUIT) {
-            quit = 1;
-        }
-    }*/
-        }
+                // User requests quit
+                if (e.type == SDL_QUIT) {
+                    quit = 1;
+                }
+            }
 
+            // Update Key States
+            // Controls: z, x = left, right; c = coin; 1 = 1 player; . = shoot
+            const uint8_t* currentKeyStates = SDL_GetKeyboardState(NULL);
+            if (currentKeyStates[SDL_SCANCODE_Z]) {
+                in_port1 = in_port1 | 0x20;
+            } else {
+                in_port1 = in_port1 & ~(0x20);
+            }
+            if (currentKeyStates[SDL_SCANCODE_X]) {
+                in_port1 = in_port1 | 0x40;
+            } else {
+                in_port1 = in_port1 & ~(0x40);
+            }
+            if (currentKeyStates[SDL_SCANCODE_PERIOD]) {
+                in_port1 = in_port1 | 0x10;
+            } else {
+                in_port1 = in_port1 & ~(0x10);
+            }
+            if (currentKeyStates[SDL_SCANCODE_C]) {
+                in_port1 = in_port1 | 0x01;
+            } else {
+                in_port1 = in_port1 & ~(0x01);
+            }
+            if (currentKeyStates[SDL_SCANCODE_1]) {
+                in_port1 = in_port1 | 0x04;
+            } else {
+                in_port1 = in_port1 & ~(0x04);
+            }
+        }
 }
 
 // Free resources and close SDL
