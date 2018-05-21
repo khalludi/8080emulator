@@ -238,6 +238,12 @@ void MachineOUT(uint8_t port) {
             // 2094 state of port 3
             uint8_t out_port3 = state.memory[0x2094];
             if (out_port3 != last_out_port3) {
+                if ((out_port3 & 0x01) == 1 && (last_out_port3 & 0x01) == 0) {
+                    Mix_PlayChannel(5, gUfoLowPitch, -1);
+                }
+                else if ((out_port3 & 0x01) == 0 && (last_out_port3 & 0x01) == 1) {
+                   Mix_HaltChannel(5);
+                }
                 if ((out_port3 & 0x02) >> 1 == 1 && (last_out_port3 & 0x02) >> 1 == 0) {
                     Mix_PlayChannel( -1, gPlayerShot, 0 );
                     // printf("Port change from %02x to %02x\n", last_out_port3, out_port3);
@@ -313,21 +319,41 @@ void draw() {
             for (int k = 0; k < 8; k++) {
                 uint8_t *p = (uint8_t *) pixels + (255-j-k) * 224 + i-k;
                 p[k] = (pix[0] >> k) & 0x01;
+
+                // White color for default
                 if (p[k] == 1) {
                     p[k] = 0x01;
+                }
+
+                // Red color under scoreboard but above aliens
+                if (255-j-k > 32 && 255-j-k < 50 && p[k] == 1) {
+                    p[k] = 0x02;
+                }
+
+                // Green color for shields and player
+                if (255-j-k > 185 && 255-j-k < 240 && p[k] == 1) {
+                    p[k] = 0x03;
+                }
+
+                // Green color for lives
+                if (255-j-k > 185 && 255-j-k < 240 && p[k] == 1) {
+                    p[k] = 0x03;
                 }
             }
         }
     }
 
-    SDL_Surface* surf = SDL_CreateRGBSurfaceFrom(pixels, 224, 256, 4, 224, 0x60, 0x18, 0x06, 0x80);
+    SDL_Surface* surf = SDL_CreateRGBSurfaceFrom(pixels, 224, 256, 4, 224, 0x0, 0x0, 0x0, 0x0);
 
-    SDL_Palette* palette = SDL_AllocPalette(2);
+    SDL_Palette* palette = SDL_AllocPalette(4);
     SDL_Color white = {255,255,255,0};
     SDL_Color black = {0,0,0,0};
-    SDL_Color colors_array[4] = {black, white};
+    SDL_Color red = {255,0,0,0};
+    SDL_Color green = {0,255,0,0};
+    SDL_Color colors_array[4] = {black, white, red, green};
     palette->colors = (SDL_Color *)&colors_array;
-    SDL_PixelFormat pixel_format = {SDL_PIXELFORMAT_INDEX1LSB, palette, 8, 1, {0, 0}, 0x60, 0x18, 0x04, 0x0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL};
+    //SDL_PixelFormat pixel_format = {SDL_PIXELFORMAT_INDEX1LSB, palette, 8, 1, {0, 0}, 0x60, 0x18, 0x04, 0x0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL};
+    SDL_PixelFormat pixel_format = {SDL_PIXELFORMAT_INDEX1LSB, palette, 8, 1, {0, 0}, 0x0, 0x0, 0x00, 0x0, 0, 0, 0, 0, 0, 0, 0, 0, 0, NULL};
     surf->format = &pixel_format;
 
     SDL_Surface* optimizedSurface = SDL_ConvertSurface( surf, gScreenSurface->format, 0 );
