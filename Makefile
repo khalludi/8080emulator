@@ -37,6 +37,13 @@ emulator-test: $(TEST_OBJECTS)
 game:
 	gcc ./src/game.c -o $@ -I /usr/local/Cellar/sdl2/2.0.7/include -L /usr/local/Cellar/sdl2/2.0.7/lib -l SDL2-2.0.0 strip --strip-debug libpthread.so.0
 
+windows:
+	x86_64-w64-mingw32-gcc -o winemulator.exe ./src/emu_shell.c ./src/game.c -I./src/include \
+					   -I /usr/local/Cellar/sdl2/2.0.7/include/SDL2 \
+					   -I /usr/local/Cellar/sdl2_mixer/2.0.2_3/include/SDL2 \
+                       -L /usr/local/cross-tools/x86_64-w64-mingw32/lib\
+                       -lmingw32 -lSDL2main -lSDL2 -lSDL2_mixer
+
 clean:
 	@rm -f *.o emulator* debug
 	@#[ -f "emulator" ] && rm emulator

@@ -2,7 +2,11 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
-#include <sys/time.h>
+#if defined(_WIN32)
+    #include <windows.h>
+#else
+    #include <sys/time.h>
+#endif
 #include "SDL_mixer.h"
 #include "SDL_pixels.h"
 #include "SDL.h"
@@ -16,7 +20,11 @@ bool init();
 void closeMedia();
 
 // Time in microseconds
-double getMicrotime();
+#if defined(_WIN32)
+    LARGE_INTEGER getMicrotime();
+#else
+    double getMicrotime();
+#endif
 
 // Other variables
 State8080 state;
@@ -294,11 +302,24 @@ void MachineOUT(uint8_t port) {
     }
 }
 
-double getMicrotime() {
-    struct timeval cTime;
-    gettimeofday(&cTime, NULL);
-    return cTime.tv_sec + cTime.tv_usec*0.000001;
-}
+#if defined(_WIN32)
+    LARGE_INTEGER getMicrotime() {
+        LARGE_INTEGER CurrentTime, ElapsedMicroseconds;
+        // LARGE_INTEGER Frequency;
+        // QueryPerformanceFrequency(&Frequency);
+        QueryPerformanceCounter(&CurrentTime);
+        // ElapsedMicroseconds.QuadPart = EndingTime.QuadPart - StartingTime.QuadPart;
+        // ElapsedMicroseconds.QuadPart *= 1000000;
+        // ElapsedMicroseconds.QuadPart /= Frequency.QuadPart;
+        return CurrentTime;
+    }
+#else
+    double getMicrotime() {
+        struct timeval cTime;
+        gettimeofday(&cTime, NULL);
+        return cTime.tv_sec + cTime.tv_usec*0.000001;
+    }
+#endif
 
 void draw() {
 
@@ -331,12 +352,12 @@ void draw() {
                 }
 
                 // Green color for shields and player
-                if (255-j-k > 185 && 255-j-k < 240 && p[k] == 1) {
+                if (255-j-k > 180 && 255-j-k < 240 && p[k] == 1) {
                     p[k] = 0x03;
                 }
 
                 // Green color for lives
-                if (255-j-k > 185 && 255-j-k < 240 && p[k] == 1) {
+                if (255-j-k >= 240 && 255-j-k <= 256 && i-k > 20 && i-k < 80 && p[k] == 1) {
                     p[k] = 0x03;
                 }
             }
@@ -383,7 +404,7 @@ void GenerateInterrupt(int interrupt) {
     state.int_enable = 0;
 }
 
-int main( int argc, char* args[])
+int main( int argc, char* argv[])
 {
     //printf("Start Main!");
 
@@ -397,25 +418,47 @@ int main( int argc, char* args[])
         // Event handler
         SDL_Event e;
 
-        double lastTime = 0;
-        double leftover_cycles = 0;
-        double nextInterrupt;
+        #if defined(_WIN32)
+            LARGE_INTEGER Frequency;
+            QueryPerformanceFrequency(&Frequency);
+            LARGE_INTEGER lastTime;
+            lastTime.QuadPart = 0;
+            LARGE_INTEGER nextInterrupt;
+        #else
+            double lastTime = 0;
+            double leftover_cycles = 0;
+            double nextInterrupt;
+        #endif
+
         int whichInterrupt;
         long cnt = 0;
-        int flag = 0;
+        //int flag = 0;
         //uint16_t tmp_hex = (state.memory[0x2079] << 8) | state.memory[0x2080];
 
         // While application is running
         while (!quit) {
 
-            if (lastTime == 0.0) {
-                lastTime = getMicrotime();
-                nextInterrupt = lastTime + .0016667;
-                whichInterrupt = 1;
-            }
+            #if defined(_WIN32)
+                if (lastTime.QuadPart == 0.0) {
+                    lastTime = getMicrotime();
+                    nextInterrupt.QuadPart = lastTime.QuadPart + 1666;
+                    whichInterrupt = 1;
+                }
+            #else
+                if (lastTime == 0.0) {
+                    lastTime = getMicrotime();
+                    nextInterrupt = lastTime + .0016667;
+                    whichInterrupt = 1;
+                }
+            #endif
 
             //printf("%d, %f, %f\n", state.int_enable, getMicrotime(), nextInterrupt);
-            double now = getMicrotime();
+            #if defined(_WIN32)
+                LARGE_INTEGER now = getMicrotime();
+            #else
+                double now = getMicrotime();
+            #endif
+            
             if (state.int_enable && now > nextInterrupt) {
                 if (whichInterrupt == 1) {
                     // Gen Interrupt
@@ -433,11 +476,15 @@ int main( int argc, char* args[])
             }
 
             double num_cycles = 0;
-            if (!flag) {
+            #if defined(_WIN32)
+                num_cycles = (((getMicrotime().QuadPart - lastTime.QuadPart) * 1000000) / Frequency) * 2;
+            #else
                 num_cycles = (getMicrotime() - lastTime) * 2000000;
-            } else {
-                num_cycles = (getMicrotime() - lastTime) * 2000000;
-            }
+            #endif
+            // if (!flag) {
+            //     num_cycles = (getMicrotime() - lastTime) * 2000000;
+            // } else {
+            // }
             //printf("%f, %f, %d\n", num_cycles, leftover_cycles, numCycles(&state));
             //int num_cycles = 100000;
             //int cnt = 0;
@@ -541,10 +588,10 @@ int main( int argc, char* args[])
                 in_port1 = in_port1 & ~(0x04);
             }
         }
-}
+    }
 
-// Free resources and close SDL
-closeMedia();
+    // Free resources and close SDL
+    closeMedia();
 
-return 0;
+    return 0;
 }
