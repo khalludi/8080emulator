@@ -29,5 +29,6 @@ typedef struct State8080 {
 
 char Emulate8080Op(State8080* state);
 
+char numCycles(State8080* state);
 
 #endif

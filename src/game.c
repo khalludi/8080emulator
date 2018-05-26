@@ -418,18 +418,17 @@ int main( int argc, char* argv[])
         // Event handler
         SDL_Event e;
 
-        #if defined(_WIN32)
-            LARGE_INTEGER Frequency;
-            QueryPerformanceFrequency(&Frequency);
-            LARGE_INTEGER lastTime;
-            lastTime.QuadPart = 0;
-            LARGE_INTEGER nextInterrupt;
-        #else
-            double lastTime = 0;
-            double leftover_cycles = 0;
-            double nextInterrupt;
-        #endif
-
+#if defined(_WIN32)
+        LARGE_INTEGER Frequency;
+        QueryPerformanceFrequency(&Frequency);
+        LARGE_INTEGER lastTime;
+        lastTime.QuadPart = 0;
+        LARGE_INTEGER nextInterrupt;
+#else
+        double lastTime = 0;
+        double nextInterrupt;
+#endif
+        double leftover_cycles = 0;
         int whichInterrupt;
         long cnt = 0;
         //int flag = 0;
@@ -438,28 +437,28 @@ int main( int argc, char* argv[])
         // While application is running
         while (!quit) {
 
-            #if defined(_WIN32)
-                if (lastTime.QuadPart == 0.0) {
-                    lastTime = getMicrotime();
-                    nextInterrupt.QuadPart = lastTime.QuadPart + 1666;
-                    whichInterrupt = 1;
-                }
-            #else
-                if (lastTime == 0.0) {
-                    lastTime = getMicrotime();
-                    nextInterrupt = lastTime + .0016667;
-                    whichInterrupt = 1;
-                }
-            #endif
+#if defined(_WIN32)
+            if (lastTime.QuadPart == 0.0) {
+                lastTime = getMicrotime();
+                nextInterrupt.QuadPart = lastTime.QuadPart + 1666;
+                whichInterrupt = 1;
+            }
+#else
+            if (lastTime == 0.0) {
+                lastTime = getMicrotime();
+                nextInterrupt = lastTime + .0016667;
+                whichInterrupt = 1;
+            }
+#endif
 
             //printf("%d, %f, %f\n", state.int_enable, getMicrotime(), nextInterrupt);
-            #if defined(_WIN32)
-                LARGE_INTEGER now = getMicrotime();
-            #else
-                double now = getMicrotime();
-            #endif
-            
+#if defined(_WIN32)
+            LARGE_INTEGER now = getMicrotime();
+            if (state.int_enable && now.QuadPart > nextInterrupt.QuadPart) {
+#else
+            double now = getMicrotime();
             if (state.int_enable && now > nextInterrupt) {
+#endif
                 if (whichInterrupt == 1) {
                     // Gen Interrupt
                     GenerateInterrupt(1);
@@ -471,16 +470,19 @@ int main( int argc, char* argv[])
                     whichInterrupt = 1;
                 }
                 draw();
+#if defined(_WIN32)
+                nextInterrupt.QuadPart = getMicrotime().QuadPart + 8333;
+#else
                 nextInterrupt = getMicrotime() + 0.00833;
+#endif
                 //printf("Draw!\n");
             }
 
-            double num_cycles = 0;
-            #if defined(_WIN32)
-                num_cycles = (((getMicrotime().QuadPart - lastTime.QuadPart) * 1000000) / Frequency) * 2;
-            #else
-                num_cycles = (getMicrotime() - lastTime) * 2000000;
-            #endif
+#if defined(_WIN32)
+            long num_cycles = (((getMicrotime().QuadPart - lastTime.QuadPart) * 1000000) / Frequency.QuadPart) * 2;
+#else
+            long num_cycles = (getMicrotime() - lastTime) * 2000000;
+#endif
             // if (!flag) {
             //     num_cycles = (getMicrotime() - lastTime) * 2000000;
             // } else {
