@@ -7,18 +7,10 @@ This project is a research project into the emulation of an 8080 chipset. The em
 To run the program, clone repository, combine the four invaders files you bought/found into one file called invaders, and put it into the res folder. Next, open the Makefile and replace the path of those SDL2 libraries with the path on your computer. I installed SDL using brew, so the paths should be correct if you do the same. Finally run make and then ./emulator to run the program. This emulator, as of right now, can be run using all operating systems but suffers from unstable framerates in Windows.
 
 ## Controls
-<<<<<<< HEAD
-</br>
-z = Player move left
-x = Player move right
-. = Player shoot
-c = Insert coin
-1 = Player 1 start button
-2 = Player 2 start button
-=======
 
  * `z`: Player move left
  * `x`: Player move right
  * `.`: Player shoot
  * `c`: Insert coin
->>>>>>> 7b3acd24f099c8e1ace4bac365a8b457a6ef8231
+ * `1`: Player 1 start button
+ * `2`: Player 2 start button
