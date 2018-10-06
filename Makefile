@@ -1,4 +1,4 @@
-CFLAGS=-Wall -I./src/include -I /usr/local/Cellar/sdl2/2.0.7/include/SDL2 -g -O0 -I /usr/local/Cellar/sdl2_mixer/2.0.2_3/include/SDL2
+CFLAGS=-Wall -std=c99 -I./src/include -I /usr/local/Cellar/sdl2/2.0.7/include/SDL2 -g -O0 -I /usr/local/Cellar/sdl2_mixer/2.0.2_3/include/SDL2
 LIBS=-lcheck -l SDL2-2.0.0 -L /usr/local/Cellar/sdl2/2.0.7/lib -l SDL2_mixer-2.0.0 -L /usr/local/Cellar/sdl2_mixer/2.0.2_3/lib
 
 ODIR=obj
