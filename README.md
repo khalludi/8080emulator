@@ -12,3 +12,5 @@ z = Player move left
 x = Player move right
 . = Player shoot
 c = Insert coin
+1 = Player 1 start button
+2 = Player 2 start button

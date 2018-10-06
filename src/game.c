@@ -70,7 +70,7 @@ bool init() {
     }
     else {
         // Create Window
-        gWindow = SDL_CreateWindow("SDL Tutorial", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
+        gWindow = SDL_CreateWindow("Space Invaders", SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, SCREEN_WIDTH, SCREEN_HEIGHT, SDL_WINDOW_SHOWN);
         if (gWindow == NULL) {
             printf("Window could not be created! SDL_Error: %s\n", SDL_GetError());
             success = false;
@@ -479,7 +479,7 @@ int main( int argc, char* argv[])
             }
 
 #if defined(_WIN32)
-            long num_cycles = (((getMicrotime().QuadPart - lastTime.QuadPart) * 1000000) / Frequency.QuadPart) * 2;
+            long num_cycles = (((getMicrotime().QuadPart - lastTime.QuadPart) * 1000000) / Frequency.QuadPart) * 2.7;// 2
 #else
             long num_cycles = (getMicrotime() - lastTime) * 2000000;
 #endif
