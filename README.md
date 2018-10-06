@@ -2,6 +2,8 @@
 
 [![Build Status](https://travis-ci.org/khalludi/8080emulator.svg?branch=master)](https://travis-ci.org/khalludi/8080emulator)
 
+Still working on getting the travis-ci tests working properly.
+
 ![alt-text-1](img/title_screen.png "Title Screen") ![alt-text-2](img/gameplay.png "Gameplay")
 
 This project is a research project into the emulation of an 8080 chipset. The emulator is functional and currently tied to the game Space Invaders. I have written the emulator entirely in C and made use of the SDL framework for cross-platform compatibility. Any comments or insights are welcome :)
