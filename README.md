@@ -16,3 +16,4 @@ To run the program, clone repository, combine the four invaders files you bought
  * `c`: Insert coin
  * `1`: Player 1 start button
  * `2`: Player 2 start button
+
